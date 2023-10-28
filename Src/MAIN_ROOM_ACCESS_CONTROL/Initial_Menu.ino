@@ -5,8 +5,7 @@ void Init_Menu(){
   Serial.println("1.- Ocupar una estacion de trabajo con equipo");
   Serial.println("2.- Acompañar a otro estudiante a una estacion");
   Serial.println("3.- Ocupar una estacion sin equipo");
-  Serial.println("4.- Consultar que estaciones estan ocupadas");
-  Serial.println("5.- Apartar dos o mas estaciones   (Solo maestros)  ");
+  Serial.println("4.- Apartar dos o mas estaciones   (Solo maestros)  ");
 }
 
 int waitForOptionChoosed() {
@@ -29,22 +28,22 @@ void manageSelectedOption(int option){
 
     switch(option){
           case 1:
-            online(); 
+            getStation(); 
           break;
 
 
           case 2:
-            
+            shareStation();
           break;
 
 
           case 3:
-            
+            getEmptyStation();
           break;
 
 
           case 4:
-            
+            getMultipleStations();
           break;
 
 

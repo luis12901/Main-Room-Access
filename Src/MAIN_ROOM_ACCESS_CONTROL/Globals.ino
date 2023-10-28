@@ -37,7 +37,9 @@
   char password[100] = "Guadalajara129#";
   const char* serverIP = "http://192.168.100.12";
   char* phpDirectory = "http://192.168.100.12/MainRoom/AccesoEstacion.php";
-
+  char* phpDirectoryToShareStation = "http://192.168.100.12/MainRoom/shareStation.php";
+  char* phpDirectoryToEmptyStation = "http://192.168.100.12/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "http://192.168.100.12/MainRoom/getMultipleStations.php";
 
 
 /*

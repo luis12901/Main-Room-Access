@@ -10,12 +10,11 @@
 
 
 
-void online(){
+void getStation(){
 
   starOfLoop = 0;
 
   while(true){
-
 
       if (starOfLoop == 0) {
 
@@ -23,10 +22,10 @@ void online(){
 
       }
 
-
+      Serial.println("Coloque su credencial en el lector (To Get full Station)");
+     
       getRFIDData();
       
-
       if(serialNumber.length() > 0){
         interaccionOcurre = true;
           inactivityTimer();
@@ -45,10 +44,223 @@ void online(){
 
   }
   
-  }
+}
   
 
+
+void shareStation(){
+
+  starOfLoop = 0;
+
+  while(true){
+
+
+      if (starOfLoop == 0) {
+
+            starOfLoop = millis();
+
+      }
+ Serial.println("Coloque su credencial en el lector  (To share)");
+
+      getRFIDData();
+      
+
+      if(serialNumber.length() > 0){
+        interaccionOcurre = true;
+          inactivityTimer();
+
+            postToShareStation();
+            waitForStationPress();
+            getJSONFromServer();
+            
+            interaccionOcurre = true;
+            inactivityTimer();
+            break;
+      }
+
+      unsigned long currentTime = millis();
+
+      if (currentTime - startTime > 60000) {break;}
+
+  }
   
+  }
+
+  void waitForStationPress(){
+         
+    Serial.println("Please enter the station: ");
+    uint8_t index = 0;
+    while(true){
+
+
+        inactivityTimer(); 
+
+
+        char enteredPassword[7];
+        key = keypad.getKey();
+
+         
+        if (key) {
+          
+          enteredPassword[index] = key;  
+          index++;
+          Serial.println(key);
+
+
+
+          interaccionOcurre = true;
+          inactivityTimer(); 
+
+          if(key == 0){
+
+            index = 0;
+            break;
+
+          }
+       }
+
+
+        if (index == 5) {
+          interaccionOcurre = true;
+          inactivityTimer(); 
+          index = 0;
+
+          break;
+         
+        }
+          
+         
+        }
+ 
+}
+
+ 
+  
+void getEmptyStation(){
+
+  starOfLoop = 0;
+
+  while(true){
+
+
+      if (starOfLoop == 0) {
+
+            starOfLoop = millis();
+
+      }
+
+      Serial.println("Coloque su credencial en el lector (For empty Station)");
+
+      getRFIDData();
+      
+
+      if(serialNumber.length() > 0){
+        interaccionOcurre = true;
+          inactivityTimer();
+
+            postToEmptyStation();
+            getJSONFromServer();
+            
+            interaccionOcurre = true;
+            inactivityTimer();
+            break;
+      }
+
+      unsigned long currentTime = millis();
+
+      if (currentTime - startTime > 60000) {break;}
+
+  }
+  
+}
+
+
+
+void getMultipleStations(){
+
+  starOfLoop = 0;
+
+  while(true){
+
+
+
+      if (starOfLoop == 0) {
+
+            starOfLoop = millis();
+
+      }
+
+      Serial.println("Coloque su credencial en el lector (For multiple Stations)");
+
+      getRFIDData();
+      
+
+      if(serialNumber.length() > 0){
+        interaccionOcurre = true;
+          inactivityTimer();
+
+            postJSONForMutipleStations();
+            waitForStationsSelections();
+            getJSONFromServer();
+            
+            interaccionOcurre = true;
+            inactivityTimer();
+            break;
+      }
+
+      unsigned long currentTime = millis();
+
+      if (currentTime - startTime > 60000) {break;}
+
+  }
+  
+}
+
+
+void waitForStationsSelections(){
+         
+    Serial.println("Please enter the number of stations you want to use: ");
+    uint8_t index = 0;
+    while(true){
+
+
+        inactivityTimer(); 
+
+
+        char enteredNumber[7];
+        key = keypad.getKey();
+
+         
+        if (key) {
+          
+          enteredNumber[index] = key;  
+          index++;
+          Serial.println(key);
+
+
+
+          interaccionOcurre = true;
+          inactivityTimer(); 
+
+          if(key == 0){
+
+            index = 0;
+            break;
+
+          }
+       }
+
+
+        if (index == 5) {
+
+          interaccionOcurre = true;
+          inactivityTimer(); 
+          index = 0;
+          break;
+         
+        }         
+        }
+}
 
 
 bool onlineVerification(){
@@ -66,6 +278,8 @@ bool onlineVerification(){
 
       }
 }
+
+
 void getRFIDData(){
 
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
@@ -108,6 +322,7 @@ void getRFIDData(){
 
 }
 
+
 void postJSONToServer(){
       uint8_t counter = 0; 
       jsonMessage = json1 + serialNumber + json2;
@@ -116,6 +331,38 @@ void postJSONToServer(){
       conexionURL(counter, completedJsonMessage, phpDirectory, false);
 
 }
+
+
+void postToShareStation(){
+      uint8_t counter = 0; 
+      jsonMessage = json1 + serialNumber + json2;
+      char completedJsonMessage[150];
+      jsonMessage.toCharArray(completedJsonMessage, 150);
+      conexionURL(counter, completedJsonMessage, phpDirectoryToShareStation, false);
+
+}
+
+
+void postToEmptyStation(){
+      uint8_t counter = 0; 
+      jsonMessage = json1 + serialNumber + json2;
+      char completedJsonMessage[150];
+      jsonMessage.toCharArray(completedJsonMessage, 150);
+      conexionURL(counter, completedJsonMessage, phpDirectoryToEmptyStation, false);
+
+}
+
+
+void postJSONForMutipleStations(){
+      uint8_t counter = 0; 
+      jsonMessage = json1 + serialNumber + json2;
+      char completedJsonMessage[150];
+      jsonMessage.toCharArray(completedJsonMessage, 150);
+      conexionURL(counter, completedJsonMessage, phpDirectoryForMultiStations, false);
+
+}
+
+
 void getJSONFromServer(){
 
     // Get all JSON message in currentLine global vaiable
@@ -193,7 +440,7 @@ void getJSONFromServer(){
 
           }
 
-          // JSOP Message recieved
+          // JSON Message recieved
           tiempoComparacion = xTaskGetTickCount();
           if (tiempoComparacion > (tiempoConexionInicio + 1000)) {
 
@@ -208,6 +455,7 @@ void getJSONFromServer(){
   //  Clear all characters within serialNumber for the next time we read a new RFID Tag
   serialNumber = "";
 }
+
 
 void applyJsonLogic() {
         if (claveS == "1234"){    
@@ -248,6 +496,7 @@ void applyJsonLogic() {
 
         }
 }
+
 
 void registerUserEntry(){
 
@@ -298,7 +547,9 @@ void registerUserEntry(){
        // esp_restart();
     
 
-}
+} 
+
+
 void registerUserExit(){
 
       //lcd.clear();
@@ -341,6 +592,8 @@ void registerUserExit(){
 
 
 }
+
+
 void noUserFoundAction(){
 
       //lcd.clear();
@@ -373,6 +626,8 @@ void noUserFoundAction(){
       //lcd.clear();
 
 }
+
+
 void NoSufficientLevel(){
 
         digitalWrite(LOCK_PIN, 1);
@@ -403,6 +658,8 @@ void NoSufficientLevel(){
         //lcd.clear();
 
 }
+
+
 void accessDenied(){
 
         //lcd.clear();
@@ -419,6 +676,8 @@ void accessDenied(){
         Serial.println("Acceso denegado.");
 
 }
+
+
 void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
   char temporal[50];
   char mensajeHTML[400];
@@ -470,4 +729,4 @@ void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
     }
     Serial.println(" ");
   }
-}
+  }
