@@ -60,9 +60,14 @@ if ($userResult->num_rows > 0) {
             } 
             else{
                 $eventType =  "Salida";
-                $STA = getEntryStation($conn, $code);
+                
 
-                if(insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA)){
+                $entryStationData = getEntryStation($conn, $code);
+                $STA = $entryStationData['STA'];
+                $partnerID = $entryStationData['partner'];
+
+
+                if(insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA, $partnerID)){
                 
                         if( setAvailableStation($conn, $STA)){
                             echo ' Registro completo ';
@@ -90,21 +95,22 @@ function findAvailableStation($conn) {
     return $stationResult;
 }
 function updateStationStatus($conn, $stationID) {
-    $updateQuery = "UPDATE estaciones SET Estado = 'ocupada' WHERE ST_ID = '$stationID'";
+    $updateQuery = "UPDATE estaciones SET Estado = 'ocupado' WHERE ST_ID = '$stationID'";
     $conn->query($updateQuery);
     return $conn->query($updateQuery) === TRUE; 
 }
 function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID) {
-    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion) 
-                    VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationID')";
+    $partner = 'NA';
+
+    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acompañante) 
+                    VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationID', 'NA')";
     $conn->query($insertQuery);
 }
 
-function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed) {
-    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion) 
-                    VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationUsed')";
+function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed, $partnerID) {
+    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acompañante) 
+                    VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationUsed', '$partnerID')";
     
-    // Intenta ejecutar la consulta
     if ($conn->query($insertQuery) === TRUE) {
         return true;
     } else {
@@ -154,18 +160,23 @@ function recordType($conn, $user_code) {
 }
 
 function getEntryStation($conn, $user_code){
+    $query = "SELECT Estacion, Acompañante FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
+    $result = $conn->query($query);
 
-            $query = "SELECT Estacion FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
-            $result = $conn->query($query);
+    $data = array(
+        'STA' => null,
+        'partner' => null
+    );
 
-            $STA = null; 
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $data['STA'] = $row['Estacion'];
+        $data['partner'] = $row['Acompañante'];
+    }
 
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $STA = $row['Estacion'];
-            return $STA;
-            }
+    return $data;
 }
+
 
 function setAvailableStation($conn, $entryStation) {
     $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = '$entryStation'";

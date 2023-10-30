@@ -69,8 +69,8 @@ void shareStation(){
         interaccionOcurre = true;
           inactivityTimer();
 
+            station = waitForStationPress();
             postToShareStation();
-            waitForStationPress();
             getJSONFromServer();
             
             interaccionOcurre = true;
@@ -80,62 +80,47 @@ void shareStation(){
 
       unsigned long currentTime = millis();
 
-      if (currentTime - startTime > 60000) {break;}
-
+      if (currentTime - startTime > 60000) {
+        break;
+      }
   }
-  
-  }
-
-  void waitForStationPress(){
-         
-    Serial.println("Please enter the station: ");
-    uint8_t index = 0;
-    while(true){
-
-
-        inactivityTimer(); 
-
-
-        char enteredPassword[7];
-        key = keypad.getKey();
-
-         
-        if (key) {
-          
-          enteredPassword[index] = key;  
-          index++;
-          Serial.println(key);
-
-
-
-          interaccionOcurre = true;
-          inactivityTimer(); 
-
-          if(key == 0){
-
-            index = 0;
-            break;
-
-          }
-       }
-
-
-        if (index == 5) {
-          interaccionOcurre = true;
-          inactivityTimer(); 
-          index = 0;
-
-          break;
-         
-        }
-          
-         
-        }
- 
 }
 
- 
-  
+String waitForStationPress() {
+  String enteredStation = "";  
+  char key;
+
+  Serial.println("Please enter the station you want to share: ");
+
+  while (enteredStation.length() < 5) {
+    key = keypad.getKey();
+
+    if (key == '0') {
+      Serial.println("Please Wait ......");
+      return enteredStation; 
+    }
+
+    if (key) {
+      enteredStation += key; 
+      Serial.println(enteredStation);
+    }
+  }
+
+  return enteredStation;
+}
+
+void postToShareStation(){
+      uint8_t counter = 0; 
+      jsonMessage = json1St + serialNumber + json2St + station + json3St;
+      char completedJsonMessage[150];
+      jsonMessage.toCharArray(completedJsonMessage, 150);
+      conexionURL(counter, completedJsonMessage, phpDirectoryToShareStation, false);
+
+}
+
+
+
+
 void getEmptyStation(){
 
   starOfLoop = 0;
@@ -174,7 +159,14 @@ void getEmptyStation(){
   
 }
 
+void postToEmptyStation(){
+      uint8_t counter = 0; 
+      jsonMessage = json1 + serialNumber + json2;
+      char completedJsonMessage[150];
+      jsonMessage.toCharArray(completedJsonMessage, 150);
+      conexionURL(counter, completedJsonMessage, phpDirectoryToEmptyStation, false);
 
+}
 
 void getMultipleStations(){
 
@@ -333,24 +325,10 @@ void postJSONToServer(){
 }
 
 
-void postToShareStation(){
-      uint8_t counter = 0; 
-      jsonMessage = json1 + serialNumber + json2;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectoryToShareStation, false);
-
-}
 
 
-void postToEmptyStation(){
-      uint8_t counter = 0; 
-      jsonMessage = json1 + serialNumber + json2;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectoryToEmptyStation, false);
 
-}
+
 
 
 void postJSONForMutipleStations(){

@@ -35,11 +35,11 @@
 
   char ssid[100]     = "TP-Link_4D28";
   char password[100] = "Guadalajara129#";
-  const char* serverIP = "http://192.168.100.12";
-  char* phpDirectory = "http://192.168.100.12/MainRoom/AccesoEstacion.php";
-  char* phpDirectoryToShareStation = "http://192.168.100.12/MainRoom/shareStation.php";
-  char* phpDirectoryToEmptyStation = "http://192.168.100.12/MainRoom/getEmptyStation.php";
-  char* phpDirectoryForMultiStations = "http://192.168.100.12/MainRoom/getMultipleStations.php";
+  const char* serverIP = "http://192.168.100.187";
+  char* phpDirectory = "http://192.168.100.187/MainRoom/AccesoEstacion.php";
+  char* phpDirectoryToShareStation = "http://192.168.100.187/MainRoom/shareStation.php";
+  char* phpDirectoryToEmptyStation = "http://192.168.100.187/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "http://192.168.100.187/MainRoom/getMultipleStations.php";
 
 
 /*
@@ -69,13 +69,22 @@
 // RFID CARD
   MFRC522 mfrc522(SS_PIN, RST_PIN);
   int readData[4];
-  String serialNumber = "";
+  char enteredStation[7];
 
 
 // Database
   String json1 = "{\"serialNumber\":\"";
   String json2 = "\"}";
+  String serialNumber = "";
+  
   String jsonMessage;
+
+  String json1St = "{\"serialNumber\":\"";
+  String json2St = "\",\"station\":\"";
+  String json3St = "\"}";
+
+  String station = "";
+
 
 
   String currentLine = "";  
