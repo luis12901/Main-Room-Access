@@ -31,6 +31,7 @@ void getStation(){
           inactivityTimer();
 
             postJSONToServer();
+            getResponseFromServer();
             getJSONFromServer();
             
             interaccionOcurre = true;
@@ -71,6 +72,7 @@ void shareStation(){
 
             station = waitForStationPress();
             postToShareStation();
+            getResponseFromServer();
             getJSONFromServer();
             
             interaccionOcurre = true;
@@ -144,6 +146,7 @@ void getEmptyStation(){
           inactivityTimer();
 
             postToEmptyStation();
+            getResponseFromServer();
             getJSONFromServer();
             
             interaccionOcurre = true;
@@ -193,6 +196,7 @@ void getMultipleStations(){
 
             postJSONForMutipleStations();
             waitForStationsSelections();
+            getResponseFromServer();
             getJSONFromServer();
             
             interaccionOcurre = true;
@@ -338,6 +342,21 @@ void postJSONForMutipleStations(){
       jsonMessage.toCharArray(completedJsonMessage, 150);
       conexionURL(counter, completedJsonMessage, phpDirectoryForMultiStations, false);
 
+}
+
+
+void getResponseFromServer() {
+  clienteServidor = servidor.available();
+  if (clienteServidor) {
+    while (clienteServidor.connected()) {
+      if (clienteServidor.available() > 0) {
+        char c = clienteServidor.read();
+        // Receive and process the response from the server
+        Serial.print(c); // Print the received character (if needed)
+      }
+    }
+    clienteServidor.stop();
+  }
 }
 
 
