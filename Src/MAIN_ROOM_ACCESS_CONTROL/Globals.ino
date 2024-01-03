@@ -26,11 +26,24 @@
 /*
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
-  const char* serverIP = "http://192.168.100.12";
-  char* phpDirectory = "http://192.168.100.12/MainRoom/AccesoEstacion.php";
+  const char* serverIP = "http://192.168.100.146";
+  char* phpDirectory = "http://192.168.100.146/MainRoom/AccesoEstacion.php";
+
+  
 
 */
-  
+
+
+  char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
+  char password[100] = "Guadalajara129#";
+  const char* serverIP = "http://192.168.100.146";
+  char* phpDirectory = "http://192.168.100.146/MainRoom/AccesoEstacion.php";
+  char* phpDirectoryToShareStation = "http://192.168.100.146/MainRoom/shareStation.php";
+  char* phpDirectoryToEmptyStation = "http://192.168.100.146/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "http://192.168.100.146/MainRoom/getMultipleStations.php";
+
+
+/*
 
 
   char ssid[100]     = "TP-Link_4D28";
@@ -40,6 +53,8 @@
   char* phpDirectoryToShareStation = "http://192.168.100.187/MainRoom/shareStation.php";
   char* phpDirectoryToEmptyStation = "http://192.168.100.187/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.187/MainRoom/getMultipleStations.php";
+
+*/
 
 
 /*

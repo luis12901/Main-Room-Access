@@ -1,10 +1,10 @@
 
-void Init_Menu(){
+void Init_Menu() {
   Serial.println("Seleccione que movimiento le gustaria realizar porfavor:");
 
-  Serial.println("1.- Ocupar una estacion de trabajo con equipo");
-  Serial.println("2.- Acompañar a otro estudiante a una estacion");
-  Serial.println("3.- Ocupar una estacion sin equipo");
+  Serial.println("1.- Ocupar/Desocupar una estacion de trabajo con equipo");
+  Serial.println("2.- Acompañar a otro estudiante en una estacion");
+  Serial.println("3.- Ocupar/Desocupar una estacion sin equipo");
   Serial.println("4.- Apartar dos o mas estaciones   (Solo maestros)  ");
 }
 
@@ -24,32 +24,32 @@ int waitForOptionChoosed() {
 }
 
 
-void manageSelectedOption(int option){
 
-    switch(option){
-          case 1:
-            getStation(); 
-          break;
+void manageSelectedOption(int option) {
 
-
-          case 2:
-            shareStation();
-          break;
+  switch (option) {
+    case 1:
+      getStation();
+      break;
 
 
-          case 3:
-            getEmptyStation();
-          break;
+    case 2:
+      shareStation();
+      break;
 
 
-          case 4:
-            getMultipleStations();
-          break;
+    case 3:
+      getEmptyStation();
+      break;
 
 
-          default:
-          Serial.println("Opción no válida");
-            break;
-        }
+    case 4:
+      getMultipleStations();
+      break;
 
+
+    default:
+      Serial.println("Opción no válida");
+      break;
+  }
 }
