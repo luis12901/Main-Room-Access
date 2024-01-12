@@ -31,8 +31,8 @@ if ($userResult->num_rows > 0) {
         $selectedstation = findStation($conn, $station);
         if ($selectedstation->num_rows > 0) {
 
-            $Availability = checkAvailability($conn, $station);
-            if($Availability->num_rows > 0){
+            $Availability = checkAvailability($conn, $station); // We use checkAvailability() to verify 
+            if($Availability->num_rows > 0){                        //if there's truly someone using this station
                 
                 updateEntryStation($conn, $station, $userName, $code, $timestamp, $station);
                 
@@ -42,7 +42,7 @@ if ($userResult->num_rows > 0) {
             }
         }
         else {
-            echo 'No existe esta estacion';
+            echo 'Estacion inexistente.';
         }
 }
 
@@ -50,41 +50,29 @@ if ($userResult->num_rows > 0) {
 
 function updateEntryStation($conn, $station, $userName, $code, $time, $STA) {
    
-    $query = "SELECT Acompañante FROM registro_uso_estaciones WHERE Estacion = '$station' ORDER BY ID DESC LIMIT 1";
+    $query = "SELECT Acomp FROM registro_uso_estaciones WHERE Estacion = '$station' ORDER BY ID DESC LIMIT 1";
     $result = $conn->query($query);
 
 
     if ($result->num_rows > 0) {
 
         $row = $result->fetch_assoc();
-        $partner = $row['Acompañante'];
+        $partner = $row['Acomp'];
+        $lastRecordID = $row['ID'];
 
-        if($partner == 'NA'){
-
-            $query = "SELECT ID FROM registro_uso_estaciones WHERE Estacion = '$station' ORDER BY ID DESC LIMIT 1";
-            $result = $conn->query($query);
-
-            if ($result->num_rows > 0) {
-                $row = $result->fetch_assoc();
-                $lastRecordID = $row['ID'];
-
+        if($partner == 'NA'){       // if thers's only one person using the selected station, then we can give this user permission                             
+                                                                // to use it with the first user
                 
-                $updateQuery = "UPDATE registro_uso_estaciones SET Acompañante = 'SI' WHERE ID = $lastRecordID";
+                $updateQuery = "UPDATE registro_uso_estaciones SET Acomp = '$userName' WHERE ID = $lastRecordID";
                 $conn->query($updateQuery);
 
-                
-                $insertQuery = "INSERT INTO acompañantes_estaciones (ID, Nombre, Codigo, Fecha_Y_Hora, Estacion) 
-                                VALUES ('$lastRecordID', '$userName', '$code' ,'$time', '$STA')";
-                $conn->query($insertQuery);
-                
-                
-            }
+                // We need to add the update the code of the student and date to know when he entered the main room 
+                            //      ALERT : ADD THIS FEATURE AFTER YOU ADD THE COLUMNS TO THE TABLE IN MYSQL
+        
         }
         else{
-            echo ' Nada';
-        }
-
-           
+            echo 'Ya hay dos personas usando esta estacion';
+        }    
     }
     else{
         echo 'No se ha encontrado infomacion de esta estacion';

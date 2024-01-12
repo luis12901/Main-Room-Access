@@ -100,15 +100,14 @@ function updateStationStatus($conn, $stationID) {
     return $conn->query($updateQuery) === TRUE; 
 }
 function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID) {
-    $partner = 'NA';
 
-    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acompañante) 
+    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
                     VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationID', 'NA')";
     $conn->query($insertQuery);
 }
 
 function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed, $partnerID) {
-    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acompañante) 
+    $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
                     VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationUsed', '$partnerID')";
     
     if ($conn->query($insertQuery) === TRUE) {
@@ -160,7 +159,7 @@ function recordType($conn, $user_code) {
 }
 
 function getEntryStation($conn, $user_code){
-    $query = "SELECT Estacion, Acompañante FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
+    $query = "SELECT Estacion, Acomp FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
     $result = $conn->query($query);
 
     $data = array(
@@ -171,7 +170,7 @@ function getEntryStation($conn, $user_code){
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         $data['STA'] = $row['Estacion'];
-        $data['partner'] = $row['Acompañante'];
+        $data['partner'] = $row['Acomp'];
     }
 
     return $data;
