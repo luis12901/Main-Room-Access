@@ -48,7 +48,7 @@ void loop() {
 
   } else {
 
-    offline();
+    Serial.println("Lo sentimos, no hay servicio.");
     
   }
 }

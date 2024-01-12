@@ -28,7 +28,6 @@ void pinConfig(){
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LOCK_PIN, HIGH);
 
-  attachInterrupt(digitalPinToInterrupt(27), boton_1_isr, RISING);
 
   //attachInterrupt(digitalPinToInterrupt(deepSleepPin), boton_1_isr, RISING);          // Deepsleep Mode Pin || GND Permanently
 
