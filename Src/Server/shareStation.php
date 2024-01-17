@@ -1,111 +1,182 @@
 <?php
+header('Content-Type: application/json');
+
+$jsonData = file_get_contents('php://input');
+$data = json_decode($jsonData);
+
 
 $fecha = new Datetime();
 $timestamp = $fecha->getTimestamp();
 
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "laboratorio";
 
-// Obtener los datos enviados
-$data = json_decode(file_get_contents('php://input'), true);
+if ($data && isset($data->serialNumber) && isset($data->station)) {
+    $serialNumber = $data->serialNumber;
+    $station = $data->station;
 
-// Conexión a la base de datos
-$conn = new mysqli($servername, $username, $password, $dbname);
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "laboratorio";
 
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
-}
-
-$serialNumber = $data['serialNumber'];
-$station = $data['station'];
-
-
-$userResult = findUser($conn, $serialNumber);
+    try {
+        $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         
-if ($userResult->num_rows > 0) {
-
-        getUserData($userResult);
-
-        $selectedstation = findStation($conn, $station);
-        if ($selectedstation->num_rows > 0) {
-
-            $Availability = checkAvailability($conn, $station); // We use checkAvailability() to verify 
-            if($Availability->num_rows > 0){                        //if there's truly someone using this station
-                
-                updateEntryStation($conn, $station, $userName, $code, $timestamp, $station);
-                
-            }
-            else{
-                echo 'Esta estacion esta desocupada';
-            }
+        
+        function findUser($conn, $serialNumber){
+            $stmt = $conn->prepare("SELECT Nombre, Codigo FROM usuarios WHERE serialNumber = :serialNumber");
+            $stmt->bindParam(':serialNumber', $serialNumber);
+            $stmt->execute();
+            return $stmt;
         }
-        else {
-            echo 'Estacion inexistente.';
+
+        function getUserData($result) {
+            global $userName, $code;
+            $row = $result->fetch(PDO::FETCH_ASSOC);
+            $userName = $row["Nombre"];
+            $code = $row["Codigo"];
         }
-}
+
+        function findStation($conn, $station) {
+            $STAQuery = "SELECT * FROM estaciones WHERE ST_ID = :station";
+            $stmt = $conn->prepare($STAQuery);
+            $stmt->bindParam(':station', $station);
+            $stmt->execute();
+            return $stmt;
+        }
+
+        function checkAvailability($conn, $station) {
+            $estado = 'ocupado';
+            $STAQuery = "SELECT * FROM estaciones WHERE ST_ID = :station AND Estado = :estado";
+            $stmt = $conn->prepare($STAQuery);
+            $stmt->bindParam(':station', $station);
+            $stmt->bindParam(':estado', $estado);
+            $stmt->execute();
+            return $stmt;
+        }
+        
+        function updateEntryStation($conn, $lastRecordID, $userName){
+            $updateQuery = "UPDATE registro_uso_estaciones SET Acomp = :userName WHERE ID = :lastRecordID";
+            $stmt = $conn->prepare($updateQuery);
+            $stmt->bindParam(':userName', $userName);
+            $stmt->bindParam(':lastRecordID', $lastRecordID);
+
+            return $stmt->execute();
+        }
 
 
 
-function updateEntryStation($conn, $station, $userName, $code, $time, $STA) {
+
+        $stmt = findUser($conn, $serialNumber);
+
+        if ($stmt->rowCount() > 0) {
+
+            getUserData($stmt);
+            
+            
+            $STAQuery = "SELECT * FROM estaciones WHERE ST_ID = :station";
+            $stmt = $conn->prepare($STAQuery);
+            $stmt->bindParam(':station', $station);
+            $stmt->execute();
+           
+
+            if ($stmt->rowCount() > 0) {
+
+                $stmt = checkAvailability($conn, $station);         // We use checkAvailability() to verify 
+                if($stmt->rowCount() > 0){                                 //if there's only one persone using this station
+                    
+                    $query = "SELECT Acomp, ID FROM registro_uso_estaciones WHERE Estacion = :station ORDER BY ID DESC LIMIT 1";
+                    $stmt = $conn->prepare($query);
+                    $stmt->bindParam(':station', $station);
+                    $stmt->execute();
+                
+                    if ($stmt->rowCount() > 0) {
+                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                        $partner = $row['Acomp'];
+                        $lastRecordID = $row['ID'];
+                        
+                        
+
+                        if ($partner == 'NA') {
+                                   
+                            if(updateEntryStation($conn, $lastRecordID, $userName)){
+
+                                $response = array(
+                                    "status" => "success",
+                                    "message" => "Acceso concedido.",
+                                    "userName" => $userName,
+                                    "userCode" => $code
+                                );
+                            }
+        
+        
+                        } else {
+                            $response = array(
+                                "status" => "busy",
+                                "message" => "Ya hay dos personas usando esta estacion.",
+                                "userName" => $userName,
+                                "userCode" => $code
+                            );
+                        }
+
+
+                    }
+                    else {
+                        $response = array(
+                            "status" => "stationNotFound",
+                            "message" => "No se ha encontrado información de esta estacion.",
+                            "userName" => $userName,
+                            "userCode" => $code
+                        );
+                    }
    
-    $query = "SELECT Acomp FROM registro_uso_estaciones WHERE Estacion = '$station' ORDER BY ID DESC LIMIT 1";
-    $result = $conn->query($query);
+                }
+                else{
+                    $response = array(
+                        "status" => "notInUse",
+                        "message" => "Esta estacion no esta en uso.",
+                        "userName" => $userName,
+                        "userCode" => $code
+                    );
+                }
+            }
+            else {
+                $response = array(
+                    "status" => "non-existent",
+                    "message" => "Estacion inexistente.",
+                    "userName" => $userName,
+                    "userCode" => $code
+                );
+            }
 
+           
+            
 
-    if ($result->num_rows > 0) {
-
-        $row = $result->fetch_assoc();
-        $partner = $row['Acomp'];
-        $lastRecordID = $row['ID'];
-
-        if($partner == 'NA'){       // if thers's only one person using the selected station, then we can give this user permission                             
-                                                                // to use it with the first user
+        } 
+        else {
+            $response = array(
+                "status" => "userNotFound",
+                "message" => "Usuario no registrado en la base de datos.",
                 
-                $updateQuery = "UPDATE registro_uso_estaciones SET Acomp = '$userName' WHERE ID = $lastRecordID";
-                $conn->query($updateQuery);
-
-                // We need to add the update the code of the student and date to know when he entered the main room 
-                            //      ALERT : ADD THIS FEATURE AFTER YOU ADD THE COLUMNS TO THE TABLE IN MYSQL
-        
+            ); 
         }
-        else{
-            echo 'Ya hay dos personas usando esta estacion';
-        }    
+
+    } catch (PDOException $e) {
+        $response = array(
+            "status" => "dbConnectionError",
+            "message" => "Error de conexión a la base de datos."
+        );
     }
-    else{
-        echo 'No se ha encontrado infomacion de esta estacion';
-    }
+
+} else {
+    $response = array(
+        "status" => "error",
+        "message" => "Datos JSON no válidos."
+    );
 }
 
 
-function findUser($conn, $serialNumber) {
-    $userQuery = "SELECT * FROM usuarios WHERE serialNumber = '$serialNumber'";
-    $userResult = $conn->query($userQuery);
-    return $userResult;
-}
+$jsonData = json_encode($response);
+echo $jsonData;
 
-function findStation($conn, $station) {
-    $STAQuery = "SELECT * FROM estaciones WHERE ST_ID = '$station'";
-    $STAResult = $conn->query($STAQuery);
-    return $STAResult;
-}
-
-function checkAvailability($conn, $station){
-    $STAQuery = "SELECT * FROM estaciones WHERE ST_ID = '$station' AND Estado = 'ocupado'";
-    $STAResult = $conn->query($STAQuery);
-    return $STAResult;
-}
-
-function getUserData($result) {
-    global $userName, $code;
-
-    $row = $result->fetch_assoc();
-    $userName = $row["Nombre"];
-    $code = $row["Codigo"];
-
-}
-
-$conn->close();
 ?>

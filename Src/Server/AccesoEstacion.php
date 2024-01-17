@@ -1,115 +1,156 @@
 <?php
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
-
-$data = json_decode(file_get_contents("php://input"), true);
-
-date_default_timezone_set('America/Mexico_City');
-
-$fecha = new Datetime();
-$timestamp = $fecha->getTimestamp();
-
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "laboratorio";
-
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
-}
-
-$serialNumber = $data['serialNumber'];
+header('Content-Type: application/json; charset=UTF-8');
 
 
-$userResult = findUser($conn, $serialNumber);
+// Recibe los datos JSON del cuerpo de la solicitud POST
+$data = json_decode(file_get_contents('php://input'), true);
 
-if ($userResult->num_rows > 0) {
 
-    getUserData($userResult);
+if ($data && isset($data->serialNumber)) {
+    $serialNumber = $data->serialNumber;
 
-    $recordResult = recordType($conn, $code);
-    $STA = $recordResult["STA"];
-    $type = $recordResult["Type"];
+    // Conecta a la base de datos
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "laboratorio";
 
-            if($type){
+    try {
+        $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-                    $eventType =  "Entrada";
+        $userResult = findUser($conn, $serialNumber);
 
-                    $stationResult = findAvailableStation($conn);
+        if ($userResult && $userResult->rowCount() > 0) {
+            getUserData($userResult);
 
-                    if ($stationResult->num_rows > 0) {
+            $recordResult = recordType($conn, $code);
+            $STA = $recordResult["STA"];
+            $type = $recordResult["Type"];
 
-                            getStationData($stationResult);
-                            
-                            if (updateStationStatus($conn, $stationID)) {
-                                        
-                                insertEntryUsageRecord($conn, $userName, $code, $timestamp, $eventType, $stationID);
+            if ($type) {
+                $eventType =  "Entrada";
+                $stationResult = findAvailableStation($conn);
 
-                            } 
-                            else {echo "Error al actualizar el estado en la tabla registropersonaludg: " . $conn->error;}
-
-                        
+                if ($stationResult && $stationResult->rowCount() > 0) {
+                    getStationData($stationResult);
+                    if (updateStationStatus($conn, $stationID)) {
+                        insertEntryUsageRecord($conn, $userName, $code, $timestamp, $eventType, $stationID);
+                        $response = array(
+                            "status" => "success(E)",
+                            "message" => "Registro completo exitosamente",
+                            "username" => $userName
+                        );
+                    } else {
+                        $response = array(
+                            "status" => "error",
+                            "message" => "Error al actualizar el estado en la tabla estaciones",
+                            "username" => $userName
+                        );
                     }
-                    else{
-                        echo "No hay estaciones disponibles, vuelva mas tarde.";
-                    }
-
-            } 
-            else{
+                } else {
+                    $response = array(
+                        "status" => "noStationsAv",
+                        "message" => "No hay estaciones disponibles, vuelva más tarde.",
+                        "username" => $userName
+                    );
+                }
+            } else {
                 $eventType =  "Salida";
-                
-
                 $entryStationData = getEntryStation($conn, $code);
                 $STA = $entryStationData['STA'];
                 $partnerID = $entryStationData['partner'];
 
-
-                if(insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA, $partnerID)){
-                
-                        if( setAvailableStation($conn, $STA)){
-                            echo ' Registro completo ';
-                        }
-                        else{echo ' Hubo un problema con el registro, porfavor llame a soporte tecnico. (Error 002) ';}
-                
+                if (insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA, $partnerID)) {
+                    if (setAvailableStation($conn, $STA)) {
+                        $response = array(
+                            "status" => "success(S)",
+                            "message" => "Registro completo exitosamente",
+                            "username" => $userName
+                        );
+                    } else {
+                        $response = array(
+                            "status" => "error",
+                            "message" => "Hubo un problema con el registro, por favor llame a soporte técnico. ( Problema con la actualizacion del estado de la estacion. )",
+                            "username" => $userName
+                        );
+                    }
+                } else {
+                    $response = array(
+                        "status" => "sqlInsertError",
+                        "message" => "Hubo un error, por favor llame a soporte técnico. ( Error de insercion en registro de salida )",
+                        "username" => $userName
+                    );
                 }
-                else{echo 'Hubo un error, porfavor llame a soporte tecnico. (Error 001)';}
             }
+        } else {
+            $response = array(
+                "status" => "NotFound",
+                "message" => "No está registrado en nuestra base de datos, por favor solicite su registro en el modulo de prestadores (N2)",
+            );
+        }
+    } catch (PDOException $e) {
+        $response = array(
+            "status" => "dbConnectionError",
+            "message" => "Error de conexión a la base de datos."
+        );
+    }
+} else {
+    $response = array(
+        "status" => "error",
+        "message" => "Datos JSON no válidos."
+    );
 }
-else{  
-    echo "No esta registrado en nuestra base de datos";
-}
 
+$jsonData = json_encode($response);
+echo $jsonData;
 
+$conn = null; 
+/*
+$jsonData = json_encode($response);
+echo $jsonData;
 
-function findUser($conn, $serialNumber) {
+$conn->close();
+*/
+function findUser($conn, $serialNumber)
+{
     $userQuery = "SELECT * FROM usuarios WHERE serialNumber = '$serialNumber'";
     $userResult = $conn->query($userQuery);
     return $userResult;
 }
-function findAvailableStation($conn) {
+
+function findAvailableStation($conn)
+{
     $stationQuery = "SELECT * FROM estaciones WHERE Estado = 'disponible' ORDER BY ID DESC LIMIT 1";
     $stationResult = $conn->query($stationQuery);
     return $stationResult;
 }
-function updateStationStatus($conn, $stationID) {
-    $updateQuery = "UPDATE estaciones SET Estado = 'ocupado' WHERE ST_ID = '$stationID'";
-    $conn->query($updateQuery);
-    return $conn->query($updateQuery) === TRUE; 
-}
-function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID) {
 
+function updateStationStatus($conn, $stationID)
+{
+    $updateQuery = "UPDATE estaciones SET Estado = 'ocupado' WHERE ST_ID = '$stationID'";
+    $result = $conn->query($updateQuery);
+
+    if ($result === TRUE) {
+        return $stationID; // Retornar $stationID si la actualización fue exitosa
+    } else {
+        return false;
+    }
+}
+
+function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID)
+{
     $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
                     VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationID', 'NA')";
     $conn->query($insertQuery);
 }
 
-function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed, $partnerID) {
+function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed, $partnerID)
+{
     $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
                     VALUES ('$userName', '$code' ,'$timestamp', '$recType', '$stationUsed', '$partnerID')";
-    
+
     if ($conn->query($insertQuery) === TRUE) {
         return true;
     } else {
@@ -117,39 +158,36 @@ function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $s
     }
 }
 
+function getUserData($result)
+{
+    global $userName, $code;
 
-
-function getUserData($result) {
-        global $userName, $code;
-    
-        $row = $result->fetch_assoc();
-        $userName = $row["Nombre"];
-        $code = $row["Codigo"];
-   
+    $row = $result->fetch_assoc();
+    $userName = $row["Nombre"];
+    $code = $row["Codigo"];
 }
-function getStationData($staResult){
 
-        global $stationID;
-        $stationRow = $staResult->fetch_assoc();
-        $stationID = $stationRow["ST_ID"];
-
+function getStationData($staResult)
+{
+    global $stationID;
+    $stationRow = $staResult->fetch_assoc();
+    $stationID = $stationRow["ST_ID"];
 }
-function recordType($conn, $user_code) {
-    
-    $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
+
+function recordType($conn, $user_code)
+{
+    $query = "SELECT Tipo, Estacion FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
     $result = $conn->query($query);
 
     $STA = null;
 
     if ($result->num_rows > 0) {
-
-
         $row = $result->fetch_assoc();
         $recordType = $row['Tipo'];
-        $STA = $row['Estacion'];  
+        $STA = isset($row['Estacion']) ? $row['Estacion'] : null;
 
         if ($recordType == "Salida") {
-             return array("STA" => $STA, "Type" => true);
+            return array("STA" => $STA, "Type" => true);
         } else {
             return array("STA" => $STA, "Type" => false);
         }
@@ -157,8 +195,8 @@ function recordType($conn, $user_code) {
 
     return array("STA" => $STA, "Type" => true);
 }
-
-function getEntryStation($conn, $user_code){
+function getEntryStation($conn, $user_code)
+{
     $query = "SELECT Estacion, Acomp FROM registro_uso_estaciones WHERE Codigo = '$user_code' ORDER BY ID DESC LIMIT 1";
     $result = $conn->query($query);
 
@@ -176,10 +214,10 @@ function getEntryStation($conn, $user_code){
     return $data;
 }
 
-
-function setAvailableStation($conn, $entryStation) {
+function setAvailableStation($conn, $entryStation)
+{
     $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = '$entryStation'";
-    
+
     if ($conn->query($updateQuery) === TRUE) {
         return true;
     } else {
@@ -188,5 +226,4 @@ function setAvailableStation($conn, $entryStation) {
 }
 
 
-$conn->close();
 ?>

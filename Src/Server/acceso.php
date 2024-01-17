@@ -50,7 +50,7 @@ if ($data && isset($data->serialNumber)) {
         }
 
         function findAvailableStation($conn){
-            $stationQuery = "SELECT * FROM estaciones_particulares WHERE Estado = 'disponible' ORDER BY ID DESC LIMIT 1";
+            $stationQuery = "SELECT * FROM estaciones WHERE Estado = 'disponible' ORDER BY ID DESC LIMIT 1";
             $stmt = $conn->prepare($stationQuery);
             $stmt->execute();
             
@@ -64,7 +64,7 @@ if ($data && isset($data->serialNumber)) {
         }
 
         function updateStationStatus($conn, $stationID){
-            $updateQuery = "UPDATE estaciones_particulares SET Estado = 'ocupado' WHERE ST_ID = :stationID";
+            $updateQuery = "UPDATE estaciones SET Estado = 'ocupado' WHERE ST_ID = :stationID";
             $stmt = $conn->prepare($updateQuery);
             $stmt->bindParam(':stationID', $stationID);
             $result = $stmt->execute();
@@ -128,7 +128,7 @@ if ($data && isset($data->serialNumber)) {
 
 
         function setAvailableStation($conn, $entryStation){
-            $updateQuery = "UPDATE estaciones_particulares SET Estado = 'disponible' WHERE ST_ID = :entryStation";
+            $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = :entryStation";
             $stmt = $conn->prepare($updateQuery);
             $stmt->bindParam(':entryStation', $entryStation);
 
@@ -139,6 +139,23 @@ if ($data && isset($data->serialNumber)) {
             }
         }
 
+        function checkLastRecordType($conn, $user_code)
+        {
+            $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = ? ORDER BY ID DESC LIMIT 1";
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param("s", $user_code);
+            $stmt->execute();
+            $stmt->store_result();
+
+            if ($stmt->num_rows > 0) {
+                $stmt->bind_result($recordType);
+                $stmt->fetch();
+
+                return $recordType == "Salida";
+            }
+
+            return false;
+        }
 
         
 
@@ -185,7 +202,7 @@ if ($data && isset($data->serialNumber)) {
                         } else {
                             $response = array(
                                 "status" => "error",
-                                "message" => "Error al actualizar el estado en la tabla 'estaciones_particulares'",
+                                "message" => "Error al actualizar el estado en la tabla 'estaciones'",
                                 "userName" => $userName,
                                 "userCode" => $code
                             );

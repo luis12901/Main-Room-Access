@@ -18,43 +18,30 @@
   unsigned long startTimeOffline = 0;
 
 //  WIFI AND SERVER
-/*
-  char ssid[100]     = "RFID_2.4";
-  char password[100] = "3333379426";
-  const char* serverIP = "http://192.168.43.197";
-  char* phpDirectory = "http://192.168.43.197/MainRoom/AccesoEstacion.php";*/
-/*
-  char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
-  char password[100] = "Guadalajara129#";
-  const char* serverIP = "http://192.168.100.146";
-  char* phpDirectory = "http://192.168.100.146/MainRoom/AccesoEstacion.php";
 
-  
-
-*/
 
 
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
   const char* serverIP = "http://192.168.100.146";
-  char* phpDirectory = "http://192.168.100.146/MainRoom/AccesoEstacion.php";
-  char* phpDirectoryToShareStation = "http://192.168.100.146/MainRoom/shareStation.php";
-  char* phpDirectoryToEmptyStation = "http://192.168.100.146/MainRoom/getEmptyStation.php";
+  String phpDir = "http://192.168.100.146/MainRoom/acceso.php";       //  Try to Change Http to Https
+  String shareStationDir = "http://192.168.100.146/MainRoom/shareStation.php";
+  String emptyStationdir = "http://192.168.100.146/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.146/MainRoom/getMultipleStations.php";
 
 
-/*
 
+/*
 
   char ssid[100]     = "TP-Link_4D28";
   char password[100] = "Guadalajara129#";
-  const char* serverIP = "http://192.168.100.187";
-  char* phpDirectory = "http://192.168.100.187/MainRoom/AccesoEstacion.php";
-  char* phpDirectoryToShareStation = "http://192.168.100.187/MainRoom/shareStation.php";
-  char* phpDirectoryToEmptyStation = "http://192.168.100.187/MainRoom/getEmptyStation.php";
-  char* phpDirectoryForMultiStations = "http://192.168.100.187/MainRoom/getMultipleStations.php";
-
+  const char* serverIP = "https://192.168.100.35";
+  String phpDirectory = "https://192.168.100.35/MainRoom/AccesoEstacion.php";       // Changed Http to Https
+  char* phpDirectoryToShareStation = "https://192.168.100.35/MainRoom/shareStation.php";
+  char* phpDirectoryToEmptyStation = "https://192.168.100.35/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "https://192.168.100.35/MainRoom/getMultipleStations.php";
 */
+
 
 
 /*
@@ -68,17 +55,17 @@
 
   #define SS_PIN 5
   #define RST_PIN 35
-  #define BUZZER_PIN 13
+  #define LED_PIN 2
   #define LOCK_PIN 33
   #define LCD 25
   #define RFID 26
   #define deepSleepPin 14
   #define BOTON_1 15
-  #define BOTON_2 2
+  #define BOTON_2 13    // Cambie este pin que era el 2 por el 13 que era el buzzer
   #define BOTON_3 4
   #define BOTON_4 23
 
-
+#define BUZZER_PIN 12
 
 
 // RFID CARD
@@ -91,7 +78,7 @@
   String json1 = "{\"serialNumber\":\"";
   String json2 = "\"}";
   String serialNumber = "";
-  
+  String jsonData = "";
   String jsonMessage;
 
   String json1St = "{\"serialNumber\":\"";

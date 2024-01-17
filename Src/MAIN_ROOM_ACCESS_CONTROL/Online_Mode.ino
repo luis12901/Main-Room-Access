@@ -8,83 +8,144 @@
 
 
 
+void sendPostRequest(String data, String directory) {
+  HTTPClient http;
+
+  Serial.print("[HTTP] Iniciando POST...\n");
+  if (http.begin(directory)) {  
+    http.addHeader("Content-Type", "application/json");
+
+    Serial.print("[HTTP] Enviando datos JSON...\n");
+    int httpResponseCode = http.POST(data);
+
+
+    if (httpResponseCode > 0) {
+      Serial.print("[HTTP] Respuesta del servidor: ");
+      Serial.println(httpResponseCode);
+      jsonData = "";
+      String response = http.getString();
+
+      DynamicJsonDocument doc(2048);
+      DeserializationError error = deserializeJson(doc, response);
+
+      if (error) {
+        Serial.print("Error al analizar JSON: ");
+        Serial.println(error.c_str());
+        return;
+      }
+
+      String status = doc["status"];
+      String message = doc["message"];
+      String userName = doc["userName"];
+      String userCode = doc["userCode"];
+
+
+      Serial.println();
+      Serial.print("     *** Respuesta del servidor: ");
+      Serial.print(message);
+      Serial.println("     ***");
+      Serial.println();
+
+      Serial.println();
+      Serial.print("     *** Nombre del usuario: ");
+      Serial.print(userName);
+      Serial.println("     ***");
+      Serial.println();
+
+      Serial.println();
+      Serial.print("     *** Status: ");
+      Serial.print(status);
+      Serial.println("     ***");
+      Serial.println();
+
+            Serial.println();
+      Serial.print("     *** Codigo: ");
+      Serial.print(userCode);
+      Serial.println("     ***");
+      Serial.println();
+
+
+      if (status == "success") {
+        Serial.println("**** " + message + " ****");
+        digitalWrite(LED_PIN, HIGH);
+        delay(3000);
+        digitalWrite(LED_PIN, LOW);
+      }
+      else if(status == "userNotFound"){
+        Serial.println("**** " + message + " ****");
+
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+        digitalWrite(LED_PIN, LOW);  
+        delay(500);
+        digitalWrite(LED_PIN, HIGH);
+        delay(500);
+        digitalWrite(LED_PIN, LOW);  
+
+      }
+      else if(status == "dbConnectionError"){
+        Serial.println("**** " + message + " ****");
+      }
+      else if(status == "error"){
+        Serial.println("**** " + message + " ****");
+      }
+
+      status = "";
+      message = "";
+      userName = "";
+      serialNumber = "";
+      
+
+    } else {
+      jsonData = "";
+      Serial.print("[HTTP] Fallo en la solicitud HTTP. Código de error: ");
+      Serial.println(httpResponseCode);
+    }
+
+    http.end();
+  } else {
+    Serial.println("[HTTP] Fallo al conectar al servidor");
+  }
+}
 
 
 void getStation(){
 
-  starOfLoop = 0;
+
 
   while(true){
-
-      if (starOfLoop == 0) {
-
-            starOfLoop = millis();
-
-      }
 
       Serial.println("Coloque su credencial en el lector (To Get full Station)");
      
       getRFIDData();
       
       if(serialNumber.length() > 0){
-        interaccionOcurre = true;
-          inactivityTimer();
-
-            postJSONToServer();
-            getResponseFromServer();
-            getJSONFromServer();
-            
-            interaccionOcurre = true;
-            inactivityTimer();
+            jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
+            sendPostRequest(jsonData, phpDir);
             break;
       }
-
-      unsigned long currentTime = millis();
-
-      if (currentTime - startTime > 60000) {break;}
-
   }
-  
 }
   
 
 
 void shareStation(){
 
-  starOfLoop = 0;
-
   while(true){
-
-
-      if (starOfLoop == 0) {
-
-            starOfLoop = millis();
-
-      }
  Serial.println("Coloque su credencial en el lector  (To share)");
 
       getRFIDData();
       
-
       if(serialNumber.length() > 0){
-        interaccionOcurre = true;
-          inactivityTimer();
 
-            station = waitForStationPress();
-            postToShareStation();
-            getResponseFromServer();
-            getJSONFromServer();
-            
-            interaccionOcurre = true;
-            inactivityTimer();
+            //station = waitForStationPress();
+            String station = "E3M2";
+            String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"station\":\"" + station + "\"}";
+
+            sendPostRequest(jsonData, shareStationDir);
             break;
       }
 
-      unsigned long currentTime = millis();
-
-      if (currentTime - startTime > 60000) {
-        break;
-      }
   }
 }
 
@@ -111,102 +172,50 @@ String waitForStationPress() {
   return enteredStation;
 }
 
-void postToShareStation(){
-      uint8_t counter = 0; 
-      jsonMessage = json1St + serialNumber + json2St + station + json3St;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectoryToShareStation, false);
-
-}
-
 
 
 
 void getEmptyStation(){
 
-  starOfLoop = 0;
 
   while(true){
 
-
-      if (starOfLoop == 0) {
-
-            starOfLoop = millis();
-
-      }
-
       Serial.println("Coloque su credencial en el lector (For empty Station)");
-
       getRFIDData();
       
-
       if(serialNumber.length() > 0){
-        interaccionOcurre = true;
-          inactivityTimer();
-
-            postToEmptyStation();
-            getResponseFromServer();
-            getJSONFromServer();
-            
-            interaccionOcurre = true;
-            inactivityTimer();
+            jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
+            sendPostRequest(jsonData, emptyStationdir);
             break;
       }
-
-      unsigned long currentTime = millis();
-
-      if (currentTime - startTime > 60000) {break;}
-
   }
-  
 }
 
-void postToEmptyStation(){
-      uint8_t counter = 0; 
-      jsonMessage = json1 + serialNumber + json2;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectoryToEmptyStation, false);
 
-}
+
+
+
+
+
+
+
 
 void getMultipleStations(){
 
-  starOfLoop = 0;
-
   while(true){
-
-
-
-      if (starOfLoop == 0) {
-
-            starOfLoop = millis();
-
-      }
 
       Serial.println("Coloque su credencial en el lector (For multiple Stations)");
 
       getRFIDData();
-      
 
       if(serialNumber.length() > 0){
-        interaccionOcurre = true;
-          inactivityTimer();
+      
 
             postJSONForMutipleStations();
             waitForStationsSelections();
             getResponseFromServer();
-            getJSONFromServer();
-            
-            interaccionOcurre = true;
-            inactivityTimer();
             break;
-      }
-
-      unsigned long currentTime = millis();
-
-      if (currentTime - startTime > 60000) {break;}
+      }  
 
   }
   
@@ -220,13 +229,9 @@ void waitForStationsSelections(){
     while(true){
 
 
-        inactivityTimer(); 
-
-
         char enteredNumber[7];
         key = keypad.getKey();
 
-         
         if (key) {
           
           enteredNumber[index] = key;  
@@ -234,12 +239,7 @@ void waitForStationsSelections(){
           Serial.println(key);
 
 
-
-          interaccionOcurre = true;
-          inactivityTimer(); 
-
           if(key == 0){
-
             index = 0;
             break;
 
@@ -248,9 +248,6 @@ void waitForStationsSelections(){
 
 
         if (index == 5) {
-
-          interaccionOcurre = true;
-          inactivityTimer(); 
           index = 0;
           break;
          
@@ -280,7 +277,7 @@ void getRFIDData(){
 
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
 
-
+      serialNumber = "";
 
       digitalWrite(BUZZER_PIN, HIGH);
       delay(200);
@@ -319,19 +316,6 @@ void getRFIDData(){
 }
 
 
-void postJSONToServer(){
-      uint8_t counter = 0; 
-      jsonMessage = json1 + serialNumber + json2;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectory, false);
-
-}
-
-
-
-
-
 
 
 
@@ -357,100 +341,6 @@ void getResponseFromServer() {
     }
     clienteServidor.stop();
   }
-}
-
-
-void getJSONFromServer(){
-
-    // Get all JSON message in currentLine global vaiable
-
-    clienteServidor = servidor.available();
-    finMensaje = false;
-
-    if (clienteServidor) {
-          tiempoConexionInicio = xTaskGetTickCount();
-          while (clienteServidor.connected()){
-            if (clienteServidor.available() > 0) {
-              char c = clienteServidor.read();
-              
-              if (c == '}') {
-                finMensaje = true;
-              }
-              if (c == '\n') {
-                if (currentLine.length() == 0) {
-                 
-
-                } else {  
-                  currentLine = "";
-                }
-              } else if (c != '\r') { 
-                currentLine += c;     
-              }
-
-              
-              // Verify variable "finMensaje" is true that means "currentLine" has all JSON parameters 
-                        // if that's the case we deserialize all JSON data from "currentLine"
-             
-              if (finMensaje) {
-
-                String mensajeJSON = currentLine;
-                StaticJsonDocument<200> doc;
-                DeserializationError error = deserializeJson(doc, mensajeJSON);
-
-                if (error){
-
-                  Serial.print(F("deserializeJson() failed: "));
-                  Serial.println(error.f_str());
-
-                } 
-                else{
-                    
-                    
-                    // Save all JSON deserialized parameter in different variables
-                          uint8_t securityLevel = doc["acceso_nivel"];
-                          acceso_nivel = securityLevel;
-
-                          uint8_t accessType = doc["acceso"];
-                          acceso = accessType;
-
-                          uint8_t userFound = doc["estado"];
-                          estado = userFound;
-
-                          const char* clave = doc["clave"];
-                          const char* nombre = doc["nombre"];
-
-                          String claveJsonMsg(clave);
-                          claveS = claveJsonMsg;
-
-                          String userName(nombre);
-                          nombreS = userName; 
-
-
-                          applyJsonLogic();
-                    
-
-                }
-          }
-          else{
-            
-            // Server error, Couldn't save all the JSON Data
-
-          }
-
-          // JSON Message recieved
-          tiempoComparacion = xTaskGetTickCount();
-          if (tiempoComparacion > (tiempoConexionInicio + 1000)) {
-
-                Serial.println("");
-                break;
-
-          }
-       }
-    }
-    clienteServidor.stop();
-  }
-  //  Clear all characters within serialNumber for the next time we read a new RFID Tag
-  serialNumber = "";
 }
 
 
@@ -581,11 +471,7 @@ void registerUserExit(){
 
 
       delay(5000);
-      //lcd.clear();
-      
-
-      // REINICIO DE LA ESP32
-          //esp_restart();
+     
 
 
 }
@@ -685,7 +571,6 @@ void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
   memset(mensajeHTML, NULL, sizeof(mensajeHTML));
   memset(temporal, NULL, sizeof(temporal));
 
-
   int cuantosBytes = strlen(mensajeJSON);
   sprintf(temporal, "POST %s HTTP/1.0\r\n", urlVar);
   strcat(mensajeHTML, temporal);
@@ -703,20 +588,25 @@ void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
   strcat(mensajeHTML, "\r\n");
   strcat(mensajeHTML, mensajeJSON);
 
-
-
   int cuantosMensaje = strlen(mensajeHTML);
-  if (pruebas == false) {
+  
+  if (!pruebas) {
     WiFiClient client;
     HTTPClient http;
     http.begin(client, servidor);
     http.addHeader("Content-Type", "application/json");
     int httpResponseCode = http.POST(mensajeJSON);
+
     Serial.print("Codigo HTTP de respuesta: ");
     Serial.println(httpResponseCode);
+
+    if (httpResponseCode > 0) {
+      String respuesta = http.getString();
+      Serial.print("Respuesta del servidor: ");
+      Serial.println(respuesta);
+    }
+
     http.end();
-
-
   } else {
     Serial.println("Bytes para transmitir: ");
     Serial.println("");
@@ -726,4 +616,5 @@ void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
     }
     Serial.println(" ");
   }
-  }
+  serialNumber = "";
+}

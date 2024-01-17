@@ -15,6 +15,7 @@ void pinConfig(){
   pinMode(RFID, OUTPUT);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LOCK_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
 
   pinMode(BOTON_1, INPUT_PULLDOWN);
   pinMode(BOTON_2, INPUT_PULLDOWN);
@@ -27,6 +28,7 @@ void pinConfig(){
   digitalWrite(RFID, LOW);
   digitalWrite(BUZZER_PIN, LOW);
   digitalWrite(LOCK_PIN, HIGH);
+  digitalWrite(LED_PIN, LOW);
 
 
   //attachInterrupt(digitalPinToInterrupt(deepSleepPin), boton_1_isr, RISING);          // Deepsleep Mode Pin || GND Permanently
