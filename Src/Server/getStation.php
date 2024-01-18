@@ -128,19 +128,35 @@ if ($data && isset($data->serialNumber)) {
 
 
         function setAvailableStation($conn, $entryStation){
-            $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = :entryStation";
-            $stmt = $conn->prepare($updateQuery);
-            $stmt->bindParam(':entryStation', $entryStation);
+            $lastLetter = substr($entryStation, -1);
 
-            if ($stmt->execute()) {
-                return true;
-            } else {
-                return false;
+            if(strtoupper($lastLetter) === 'P'){
+            
+                $updateQuery = "UPDATE estaciones_particulares SET Estado = 'disponible' WHERE ST_ID = :entryStation";
+                $stmt = $conn->prepare($updateQuery);
+                $stmt->bindParam(':entryStation', $entryStation);
+
+                if ($stmt->execute()) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
+            else{
+                $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = :entryStation";
+                $stmt = $conn->prepare($updateQuery);
+                $stmt->bindParam(':entryStation', $entryStation);
+
+                if ($stmt->execute()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
         }
 
-        function checkLastRecordType($conn, $user_code)
-        {
+        function checkLastRecordType($conn, $user_code){
             $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = ? ORDER BY ID DESC LIMIT 1";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("s", $user_code);
@@ -158,6 +174,10 @@ if ($data && isset($data->serialNumber)) {
         }
 
         
+        
+        
+
+
 
         $stmt = findUser($conn, $serialNumber);
 

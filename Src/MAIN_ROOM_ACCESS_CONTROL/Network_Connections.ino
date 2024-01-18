@@ -58,9 +58,7 @@ bool WifiConnected() {
 
 }
 bool ServerConnected() {
-  
-  // Variables de conexión HTTP
-    
+      
     WiFiClient client;
     HTTPClient http;
 
@@ -70,10 +68,7 @@ bool ServerConnected() {
   int httpCode = http.GET();
 
   if (httpCode > 0) {
-    
-      //digitalWrite(BUZZER_PIN, HIGH);
-      //delay(200);
-      //digitalWrite(BUZZER_PIN, LOW);
+  
       return true;
        
   }

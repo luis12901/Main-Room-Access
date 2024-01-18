@@ -20,27 +20,28 @@
 //  WIFI AND SERVER
 
 
-
+/*
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
   const char* serverIP = "http://192.168.100.146";
-  String phpDir = "http://192.168.100.146/MainRoom/acceso.php";       //  Try to Change Http to Https
+  String phpDir = "http://192.168.100.146/MainRoom/getStation.php";       //  Try to Change Http to Https
   String shareStationDir = "http://192.168.100.146/MainRoom/shareStation.php";
   String emptyStationdir = "http://192.168.100.146/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.146/MainRoom/getMultipleStations.php";
 
 
 
-/*
+*/
 
   char ssid[100]     = "TP-Link_4D28";
   char password[100] = "Guadalajara129#";
-  const char* serverIP = "https://192.168.100.35";
-  String phpDirectory = "https://192.168.100.35/MainRoom/AccesoEstacion.php";       // Changed Http to Https
-  char* phpDirectoryToShareStation = "https://192.168.100.35/MainRoom/shareStation.php";
-  char* phpDirectoryToEmptyStation = "https://192.168.100.35/MainRoom/getEmptyStation.php";
-  char* phpDirectoryForMultiStations = "https://192.168.100.35/MainRoom/getMultipleStations.php";
-*/
+  const char* serverIP = "http://192.168.100.35";
+  String phpDir = "http://192.168.100.35/MainRoom/getStation.php";       //  Try to Change Http to Https
+  String shareStationDir = "http://192.168.100.35/MainRoom/shareStation.php";
+  String emptyStationdir = "http://192.168.100.35/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "http://192.168.100.35/MainRoom/getMultipleStations.php";
+
+
 
 
 

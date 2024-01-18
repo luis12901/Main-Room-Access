@@ -128,14 +128,30 @@ if ($data && isset($data->serialNumber)) {
 
 
         function setAvailableStation($conn, $entryStation){
-            $updateQuery = "UPDATE estaciones_particulares SET Estado = 'disponible' WHERE ST_ID = :entryStation";
-            $stmt = $conn->prepare($updateQuery);
-            $stmt->bindParam(':entryStation', $entryStation);
+            $lastLetter = substr($entryStation, -1);
 
-            if ($stmt->execute()) {
-                return true;
-            } else {
-                return false;
+            if(strtoupper($lastLetter) === 'P'){
+            
+                $updateQuery = "UPDATE estaciones_particulares SET Estado = 'disponible' WHERE ST_ID = :entryStation";
+                $stmt = $conn->prepare($updateQuery);
+                $stmt->bindParam(':entryStation', $entryStation);
+
+                if ($stmt->execute()) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            else{
+                $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = :entryStation";
+                $stmt = $conn->prepare($updateQuery);
+                $stmt->bindParam(':entryStation', $entryStation);
+
+                if ($stmt->execute()) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
 
