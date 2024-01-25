@@ -21,8 +21,11 @@ void pinConfig(){
   pinMode(BOTON_2, INPUT_PULLDOWN);
   pinMode(BOTON_3, INPUT_PULLDOWN);
   pinMode(BOTON_4, INPUT_PULLDOWN);
-
-
+  /*attachInterrupt(digitalPinToInterrupt(BOTON_1), buttonInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(BOTON_2), buttonInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(BOTON_3), buttonInterrupt, RISING);
+  attachInterrupt(digitalPinToInterrupt(BOTON_4), buttonInterrupt, RISING);
+*/
 
   digitalWrite(LCD, LOW);
   digitalWrite(RFID, LOW);

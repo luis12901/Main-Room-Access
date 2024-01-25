@@ -55,6 +55,7 @@ bool WifiConnected() {
   Serial.println("MAC address: ");
   Serial.println(WiFi.macAddress());
   return true;
+  
 
 }
 bool ServerConnected() {

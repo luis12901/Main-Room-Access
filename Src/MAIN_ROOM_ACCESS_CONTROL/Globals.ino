@@ -7,31 +7,30 @@
 */
 
 
-
 // INACTIVITY TIMER
-  static unsigned long startTime;
+
   bool interaccionOcurre = true;
 
 // OFFLINE TIMER
   bool offlineInteraction = true;
   unsigned long starOfLoop = 0;
   unsigned long startTimeOffline = 0;
-
+  const int DISPLAY_TIME = 2000;
 //  WIFI AND SERVER
 
 
-/*
+
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
   const char* serverIP = "http://192.168.100.146";
-  String phpDir = "http://192.168.100.146/MainRoom/getStation.php";       //  Try to Change Http to Https
+  String phpDir = "http://192.168.100.146/MainRoom/getStation.php";       
   String shareStationDir = "http://192.168.100.146/MainRoom/shareStation.php";
   String emptyStationdir = "http://192.168.100.146/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.146/MainRoom/getMultipleStations.php";
 
 
+/*
 
-*/
 
   char ssid[100]     = "TP-Link_4D28";
   char password[100] = "Guadalajara129#";
@@ -41,30 +40,22 @@
   String emptyStationdir = "http://192.168.100.35/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.35/MainRoom/getMultipleStations.php";
 
-
-
-
-
-/*
-  char ssid[100]     = "INFINITUM8664_2.4";
-  char password[100] = "7231669603";
-  const char* serverIP = "http://192.168.1.124";
-  char* phpDirectory = "http://192.168.1.124/MainRoom/AccesoEstacion.php";
 */
+
 
 // Peripheral_pins
 
   #define SS_PIN 5
   #define RST_PIN 35
   #define LED_PIN 2
-  #define LOCK_PIN 33
+  #define LOCK_PIN 14
   #define LCD 25
   #define RFID 26
-  #define deepSleepPin 14
-  #define BOTON_1 15
-  #define BOTON_2 13    // Cambie este pin que era el 2 por el 13 que era el buzzer
+  #define deepSleepPin 33
+  #define BOTON_1 17
+  #define BOTON_2 13    
   #define BOTON_3 4
-  #define BOTON_4 23
+  #define BOTON_4 16
 
 #define BUZZER_PIN 12
 
@@ -73,6 +64,12 @@
   MFRC522 mfrc522(SS_PIN, RST_PIN);
   int readData[4];
   char enteredStation[7];
+
+
+      String status_str = "";
+      String message = "";
+      String userName_str = "";
+      String userCode = "";
 
 
 // Database
@@ -141,6 +138,5 @@
   const int pirPin = 35; 
 
 
-// Initial Menu
-  int optionSelected = 0;
+
 

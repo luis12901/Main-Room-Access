@@ -6,18 +6,15 @@
    Contact: joseluis.murillo2022@hotmail.com
 */
 
-
-
 void sendPostRequest(String data, String directory) {
   HTTPClient http;
 
   Serial.print("[HTTP] Iniciando POST...\n");
-  if (http.begin(directory)) {  
+  if (http.begin(directory)) {
     http.addHeader("Content-Type", "application/json");
 
     Serial.print("[HTTP] Enviando datos JSON...\n");
     int httpResponseCode = http.POST(data);
-
 
     if (httpResponseCode > 0) {
       Serial.print("[HTTP] Respuesta del servidor: ");
@@ -39,6 +36,8 @@ void sendPostRequest(String data, String directory) {
       String userName = doc["userName"];
       String userCode = doc["userCode"];
 
+      status_str = status;
+      userName_str = userName;
 
       Serial.println();
       Serial.print("     *** Respuesta del servidor: ");
@@ -58,44 +57,24 @@ void sendPostRequest(String data, String directory) {
       Serial.println("     ***");
       Serial.println();
 
-            Serial.println();
+      Serial.println();
       Serial.print("     *** Codigo: ");
       Serial.print(userCode);
       Serial.println("     ***");
       Serial.println();
 
-
-      if (status == "success") {
-        Serial.println("**** " + message + " ****");
-        digitalWrite(LED_PIN, HIGH);
-        delay(3000);
-        digitalWrite(LED_PIN, LOW);
-      }
-      else if(status == "userNotFound"){
-        Serial.println("**** " + message + " ****");
-
-        digitalWrite(LED_PIN, HIGH);
-        delay(500);
-        digitalWrite(LED_PIN, LOW);  
-        delay(500);
-        digitalWrite(LED_PIN, HIGH);
-        delay(500);
-        digitalWrite(LED_PIN, LOW);  
-
-      }
-      else if(status == "dbConnectionError"){
-        Serial.println("**** " + message + " ****");
-      }
-      else if(status == "error"){
-        Serial.println("**** " + message + " ****");
-      }
+      applyAction();
 
       status = "";
       message = "";
       userName = "";
-      serialNumber = "";
-      
+      userCode = "";
 
+      serialNumber = "";
+      userName_str = "";
+      status_str = "";
+      timerSt = false;
+      optionSelected = 0;
     } else {
       jsonData = "";
       Serial.print("[HTTP] Fallo en la solicitud HTTP. Código de error: ");
@@ -108,63 +87,97 @@ void sendPostRequest(String data, String directory) {
   }
 }
 
+void lcdMessages(int selector) {
+  if (selector == 1) {
+    if (!screenUpdated) {
+      lcd.clear();
+      printCentered(0, "Coloque su");
+      printCentered(1, "credencial");
 
-void getStation(){
+      Serial.println("Place your credential on the reader");
 
+      screenUpdated = true;
+    }
+  } else if (selector == 2) {
+    lcd.clear();
+    printCentered(0, "Bienvenido,");
+    printCentered(1, userName_str);
+  } else if (selector == 3) {
+    lcd.clear();
+    printCentered(0, "Salida ");
+    printCentered(1, "registrada");
+  } else if (selector == 4) {
+    lcd.clear();
+    printCentered(0, "Uusario");
+    printCentered(1, "inexistente.");
+  } else if (selector == 5) {
+    lcd.clear();
+    printCentered(0, "No tiene acceso");
+    printCentered(1, "a esta aula.");
+  } else if (selector == 6) {
+    lcd.clear();
+    printCentered(1, "Acceso denegado.");
+  } else if (selector == 7) {
+    lcd.clear();
+    printCentered(0, "(DB ERROR.)");
+  }
 
-
-  while(true){
-
-      Serial.println("Coloque su credencial en el lector (To Get full Station)");
-     
-      getRFIDData();
-      
-      if(serialNumber.length() > 0){
-            jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
-            sendPostRequest(jsonData, phpDir);
-            break;
-      }
+  else if (selector == 8) {
+    lcd.clear();
+    printCentered(0, "Error. Json");
+    printCentered(1, "no valido.");
   }
 }
-  
 
+void getStation() {
+  while (true) {
+    lcdMessages(1);
 
-void shareStation(){
+    getRFIDData();
 
-  while(true){
- Serial.println("Coloque su credencial en el lector  (To share)");
+    if (serialNumber.length() > 0) {
+      screenUpdated = false;
+      jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
+      sendPostRequest(jsonData, phpDir);
+      break;
+    }
+  }
+}
 
-      getRFIDData();
-      
-      if(serialNumber.length() > 0){
+void shareStation() {
 
-            //station = waitForStationPress();
-            String station = "E3M2";
-            String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"station\":\"" + station + "\"}";
+  while (true) {
+    lcdMessages(1);
+    getRFIDData();
 
-            sendPostRequest(jsonData, shareStationDir);
-            break;
-      }
+    if (serialNumber.length() > 0) {
+      screenUpdated = false;
+      String station = "E3M2";
+      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"station\":\"" + station + "\"}";
 
+      sendPostRequest(jsonData, shareStationDir);
+      break;
+    }
   }
 }
 
 String waitForStationPress() {
-  String enteredStation = "";  
+  String enteredStation = "";
   char key;
-
-  Serial.println("Please enter the station you want to share: ");
+  lcdMessages(1);
 
   while (enteredStation.length() < 5) {
+    screenUpdated = false;
+
     key = keypad.getKey();
 
     if (key == '0') {
       Serial.println("Please Wait ......");
-      return enteredStation; 
+      return enteredStation;
     }
 
     if (key) {
-      enteredStation += key; 
+      enteredStation += key;
       Serial.println(enteredStation);
     }
   }
@@ -172,162 +185,130 @@ String waitForStationPress() {
   return enteredStation;
 }
 
+void getEmptyStation() {
 
+  while (true) {
+    lcdMessages(1);
+    getRFIDData();
 
-
-void getEmptyStation(){
-
-
-  while(true){
-
-      Serial.println("Coloque su credencial en el lector (For empty Station)");
-      getRFIDData();
-      
-      if(serialNumber.length() > 0){
-            jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
-            sendPostRequest(jsonData, emptyStationdir);
-            break;
-      }
+    if (serialNumber.length() > 0) {
+      screenUpdated = false;
+      jsonData = "{\"serialNumber\":\"" + serialNumber + "\"}";
+      sendPostRequest(jsonData, emptyStationdir);
+      break;
+    }
   }
 }
 
+void getMultipleStations() {
+  while (true) {
 
+    lcdMessages(1);
+    getRFIDData();
 
-
-
-
-
-
-
-
-void getMultipleStations(){
-
-  while(true){
-
-      Serial.println("Coloque su credencial en el lector (For multiple Stations)");
-
-      getRFIDData();
-
-      if(serialNumber.length() > 0){
-      
-
-            postJSONForMutipleStations();
-            waitForStationsSelections();
-            getResponseFromServer();
-            break;
-      }  
-
+    if (serialNumber.length() > 0) {
+      postJSONForMutipleStations();
+      waitForStationsSelections();
+      getResponseFromServer();
+      break;
+    }
   }
-  
 }
 
+void waitForStationsSelections() {
+  lcd.clear();
+  printCentered(0, "Numero");
+  printCentered(1, "de estaciones");
 
-void waitForStationsSelections(){
-         
-    Serial.println("Please enter the number of stations you want to use: ");
-    uint8_t index = 0;
-    while(true){
+  Serial.println("Ingrese el número de estaciones que desea usar: ");
 
+  uint8_t index = 0;
+  char enteredNumber[7];
 
-        char enteredNumber[7];
-        key = keypad.getKey();
+  while (true) {
+    key = keypad.getKey();
 
-        if (key) {
-          
-          enteredNumber[index] = key;  
-          index++;
-          Serial.println(key);
+    if (key) {
+      enteredNumber[index] = key;
+      index++;
+      Serial.println(key);
 
-
-          if(key == 0){
-            index = 0;
-            break;
-
-          }
-       }
-
-
-        if (index == 5) {
-          index = 0;
-          break;
-         
-        }         
-        }
-}
-
-
-bool onlineVerification(){
-
-      if(ServerConnected()){
-        
-        Serial.println("Connected Successfully");
-        return true;
-
+      if (key == 0) {
+        index = 0;
+        break;
       }
-      else{
+    }
 
-        Serial.println("Connection Error (Code: 002)");
-        return false;
-
-      }
+    if (index == 5) {
+      index = 0;
+      break;
+    }
+  }
 }
 
+bool onlineVerification() {
+  static bool previousConnectionState = false;
 
-void getRFIDData(){
+  bool isConnected = ServerConnected();
 
+  if (isConnected != previousConnectionState) {
+    lcd.clear();
+
+    if (isConnected) {
+      printCentered(0, "Conectado");
+      printCentered(1, "");
+      Serial.println("Connected Successfully");
+    } else {
+      printCentered(0, "Error de");
+      printCentered(1, "conexion");
+      Serial.println("Connection Error (Code: 002)");
+    }
+
+    previousConnectionState = isConnected;
+  }
+
+  return isConnected;
+}
+
+void getRFIDData() {
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
+    lcd.clear();
 
-      serialNumber = "";
+    serialNumber = "";
 
-      digitalWrite(BUZZER_PIN, HIGH);
-      delay(200);
-      digitalWrite(BUZZER_PIN, LOW);
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
 
-      // confirmamos los avances que no se puedan inter
-      Serial.println("Card Detected!");
-      Serial.println("Please Wait .........");
+    printCentered(0, "Por favor");
+    printCentered(1, "    espere....");
 
-      
-      for (int i = 0; i < 4; i++) {
+    Serial.println("Card Detected!");
+    Serial.println("Please Wait .........");
 
-        readData[i] = mfrc522.uid.uidByte[i];
+    for (int i = 0; i < 4; i++) {
+      readData[i] = mfrc522.uid.uidByte[i];
+    }
 
-      }
+    for (int i = 0; i < 4; i++) {
+      String decimalByte = String(readData[i]);
+      serialNumber += decimalByte;
+    }
 
-      
-      for (int i = 0; i < 4; i++) {
-
-        String decimalByte = String(readData[i]);
-        serialNumber += decimalByte;
-
-      }
-
-      if (serialNumber.length() > 0) {
-
-          Serial.print("Serial number: ");
-          Serial.println(serialNumber);
-         
-      
-      }
-      
-
+    if (serialNumber.length() > 0) {
+      Serial.print("Serial number: ");
+      Serial.println(serialNumber);
+    }
   }
-
 }
 
-
-
-
-
-void postJSONForMutipleStations(){
-      uint8_t counter = 0; 
-      jsonMessage = json1 + serialNumber + json2;
-      char completedJsonMessage[150];
-      jsonMessage.toCharArray(completedJsonMessage, 150);
-      conexionURL(counter, completedJsonMessage, phpDirectoryForMultiStations, false);
-
+void postJSONForMutipleStations() {
+  uint8_t counter = 0;
+  jsonMessage = json1 + serialNumber + json2;
+  char completedJsonMessage[150];
+  jsonMessage.toCharArray(completedJsonMessage, 150);
+  conexionURL(counter, completedJsonMessage, phpDirectoryForMultiStations, false);
 }
-
 
 void getResponseFromServer() {
   clienteServidor = servidor.available();
@@ -336,232 +317,129 @@ void getResponseFromServer() {
       if (clienteServidor.available() > 0) {
         char c = clienteServidor.read();
         // Receive and process the response from the server
-        Serial.print(c); // Print the received character (if needed)
+        Serial.print(c);  // Print the received character (if needed)
       }
     }
     clienteServidor.stop();
   }
 }
 
+void applyAction() {
 
-void applyJsonLogic() {
-        if (claveS == "1234"){    
-
-              // Add Meta data
-
-              if (estado == 1) {
-
-                    if (acceso_nivel == 1) {
-
-                          if (acceso == 1) {
-
-                                registerUserEntry();
-
-                          } 
-                          else {
-
-                                registerUserExit();
-
-                          }
-                    } 
-                    else {
-
-                      NoSufficientLevel();
-
-                    }
-              } 
-              else {
-
-                noUserFoundAction();
-
-              }
-
-        }
-        else {
-
-            accessDenied();
-
-        }
+  if (status_str == "success (E)") {
+    userEntry();
+  } else if (status_str == "success (S)") {
+    userExit();
+  } else if (status_str == "userNotFound") {
+    lcdMessages(4);
+    digitalWrite(LOCK_PIN, HIGH);
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "dbConnectionError") {
+    lcdMessages(7);
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "error") {
+    lcdMessages(8);
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "busy") {
+    lcd.clear();
+    printCentered(0, "Ya hay dos");
+    printCentered(1, "personas aquí.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "stationNotFound") {
+    lcd.clear();
+    printCentered(0, "Estacion");
+    printCentered(1, "inexistente.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "notInUse") {
+    lcd.clear();
+    printCentered(0, "Esta estacion no");
+    printCentered(1, "esta en uso.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "non-existent") {
+    lcd.clear();
+    printCentered(0, "Estacion");
+    printCentered(1, "inexistente.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "already-accompanying") {
+    lcd.clear();
+    printCentered(0, "Ya esta asignado");
+    printCentered(1, "con alguien.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "already-using-a-station") {
+    lcd.clear();
+    printCentered(0, "Ya esta usando");
+    printCentered(1, "una estacion.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "userNotFound") {
+    lcd.clear();
+    printCentered(0, "Usuario no");
+    printCentered(1, "registrado.");
+    delay(3000);
+    lcd.clear();
+  } else if (status_str == "success (SHARE)") {
+    lcd.clear();
+    lcdMessages(2);
+    delay(3000);
+    lcd.clear();
+  }
 }
 
-
-void registerUserEntry(){
-
-        // Unlock the lock
-        digitalWrite(LOCK_PIN, 0);
-
-        // Serial printing
-        Serial.print("Welcome ");
-        Serial.print(nombreS);
-        Serial.println(", your entry has been registered.");
-
-        // LCD screen configuration and manipulation
-        ////lcd.clear();
-        ////lcd.setCursor(5, 0);
-        ////lcd.print("Welcome,");
-
-        nombreLength = nombreS.length();
-        espaciosLibres = 20 - nombreLength;
-        espaciosIzquierda = espaciosLibres / 2;
-
-        ////lcd.setCursor(espaciosIzquierda, 1);
-        ////lcd.print(nombreS);
-        ////lcd.setCursor(2, 2);
-        ////lcd.print("has been registered");
-        ////lcd.setCursor(5, 3);
-        ////lcd.print("your entry.");
-
-        // Sending HTTP headers
-        clienteServidor.println("HTTP/1.1 200 OK");
-        clienteServidor.println("Content-type: text/html");
-        clienteServidor.println();
-
-        // Sending a JSON message as response
-        clienteServidor.print("{\"respuesta\":\"ok\",\"nombre\":\"");
-        clienteServidor.print(nombreS);
-        clienteServidor.println();
-
-        // Wait before continuing
-        delay(8000);
-
-        // Lock the lock after a certain time
-        digitalWrite(LOCK_PIN, 1);
-
-        // Clearing the LCD screen
-        ////lcd.clear();
-
-        // Restarting the ESP32
-       // esp_restart();
-    
-
-} 
-
-
-void registerUserExit(){
-
-      //lcd.clear();
-      Serial.print(nombreS);
-      Serial.println(", your exit has been registered.");
-      
-       
-      //lcd.setCursor(0,0);
-      //lcd.print("Se ha registrado su");
-
-
-      //lcd.setCursor(6,1);
-      //lcd.print("salida");
-
-      nombreLength = nombreS.length();
-      espaciosLibres = 20 - nombreLength;
-      espaciosIzquierda = espaciosLibres / 2;
-                       
-      //lcd.setCursor(espaciosIzquierda,2);
-      //lcd.print(nombreS);
-                      
-      digitalWrite(LOCK_PIN, 1);
-
-
-      clienteServidor.println("HTTP/1.1 200 OK");
-      clienteServidor.println("Content-type:text/html");
-      clienteServidor.println("\"}");
-      clienteServidor.println();
-      clienteServidor.print("{\"respuesta\":\"ok\",\"nombre\":\"");
-      clienteServidor.print(nombreS);
-      clienteServidor.println();
-
-
-      delay(5000);
-     
-
-
+void userEntry() {
+  lcdMessages(2);
+  digitalWrite(LOCK_PIN, LOW);
+  Serial.print("Bienvenido ");
+  Serial.print(userName_str);
+  Serial.println(", tu entrada ha sido registrada.");
+  delay(8000);
+  digitalWrite(LOCK_PIN, HIGH);
+  lcd.clear();
 }
 
-
-void noUserFoundAction(){
-
-      //lcd.clear();
-
-
-      //lcd.setCursor(5,0);
-      //lcd.print("Lo sentimos,");
-
-      //lcd.setCursor(1,1);
-      //lcd.print("no se ha encontrado");
-
-      //lcd.setCursor(4,2);
-      //lcd.print("su usuario.");
-
-
-      digitalWrite(LOCK_PIN, 1);
-
-
-      clienteServidor.println("HTTP/1.1 200 OK");
-      clienteServidor.println("Content-type:text/html");
-      clienteServidor.println();
-      clienteServidor.println("{\"Respuesta\":\"Coudln't found this user\"}");
-      clienteServidor.println();
-
-
-      Serial.println("Lo sentimos, no se ha encontrado su usuario en nuestra base de datos.");
-
-
-      delay(5000);
-      //lcd.clear();
-
+void userExit() {
+  lcdMessages(3);
+  Serial.print(userName_str);
+  Serial.println(", tu salida ha sido registrada.");
+  digitalWrite(LOCK_PIN, LOW);
+  delay(5000);
+  digitalWrite(LOCK_PIN, HIGH);
+  lcd.clear();
 }
 
-
-void NoSufficientLevel(){
-
-        digitalWrite(LOCK_PIN, 1);
-
-        //lcd.clear();
-
-
-        //lcd.setCursor(3, 0);
-        //lcd.print("Lo sentimos,");
-
-        //lcd.setCursor(2, 1);
-        //lcd.print("no tiene acceso");
-
-        //lcd.setCursor(4, 2);
-        //lcd.print("a esta aula.");
-
-        clienteServidor.println("HTTP/1.1 200 OK");
-        clienteServidor.println("Content-type:text/html");
-        clienteServidor.println();
-        clienteServidor.println("{\"Respuesta\":\"User with no Sufficient Level\"}");
-        clienteServidor.println();
-
-
-        Serial.println("Lo sentimos, no tiene acceso a esta aula.");
-
-
-        delay(5000);
-        //lcd.clear();
-
+/*
+void noUserFoundAction()
+{
+  lcdMessages(4);
+  digitalWrite(LOCK_PIN, HIGH);
+  delay(3000);
+  lcd.clear();
 }
 
-
-void accessDenied(){
-
-        //lcd.clear();
-
-        //lcd.setCursor(3, 1);
-        //lcd.print("Acceso denegado.");
-
-        clienteServidor.println("HTTP/1.1 200 OK");
-        clienteServidor.println("Content-type:text/html");
-        clienteServidor.println();
-        clienteServidor.println("{\"respuesta\":\"errorClave\"}");
-        clienteServidor.println();
-
-        Serial.println("Acceso denegado.");
-
+void NoSufficientLevel()
+{
+  lcdMessages(5);
+  digitalWrite(LOCK_PIN, HIGH);
+  delay(5000);
+  lcd.clear();
 }
 
+void accessDenied()
+{
+  lcdMessages(6);
+  Serial.println("Acceso denegado.");
+  lcd.clear();
+}
+*/
 
-void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
+void conexionURL(int counter, char *mensajeJSON, char *servidor, bool pruebas) {
   char temporal[50];
   char mensajeHTML[400];
   char Usuario[10] = "bot33";
@@ -589,7 +467,7 @@ void conexionURL(int counter, char* mensajeJSON, char* servidor, bool pruebas) {
   strcat(mensajeHTML, mensajeJSON);
 
   int cuantosMensaje = strlen(mensajeHTML);
-  
+
   if (!pruebas) {
     WiFiClient client;
     HTTPClient http;
