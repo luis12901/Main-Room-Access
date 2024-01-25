@@ -19,7 +19,7 @@
 //  WIFI AND SERVER
 
 
-
+/*
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
   const char* serverIP = "http://192.168.100.146";
@@ -29,7 +29,7 @@
   char* phpDirectoryForMultiStations = "http://192.168.100.146/MainRoom/getMultipleStations.php";
 
 
-/*
+
 
 
   char ssid[100]     = "TP-Link_4D28";
@@ -39,8 +39,16 @@
   String shareStationDir = "http://192.168.100.35/MainRoom/shareStation.php";
   String emptyStationdir = "http://192.168.100.35/MainRoom/getEmptyStation.php";
   char* phpDirectoryForMultiStations = "http://192.168.100.35/MainRoom/getMultipleStations.php";
-
 */
+char ssid[100]     = "GIT_LUIS12901";
+  char password[100] = "3333379426";
+  const char* serverIP = "http://192.168.43.122";
+  String phpDir = "http://192.168.43.122/MainRoom/getStation.php";       //  Try to Change Http to Https
+  String shareStationDir = "http://192.168.43.122/MainRoom/shareStation.php";
+  String emptyStationdir = "http://192.168.43.122/MainRoom/getEmptyStation.php";
+  char* phpDirectoryForMultiStations = "http://192.168.43.122/MainRoom/getMultipleStations.php";
+
+
 
 
 // Peripheral_pins

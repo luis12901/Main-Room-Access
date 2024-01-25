@@ -10,7 +10,6 @@ void Init_Menu()
 
 void performAction(int option)
 {
-  lcd.clear();
   switch (option)
   {
   case 1:
@@ -61,7 +60,6 @@ bool displayMenu()
     screenUpdated = true;
 
     }
-  
   }
   else if (millis() - startTime < 4000)
   {
@@ -113,6 +111,8 @@ bool displayMenu()
   {
     optionSelected = 1;
     Serial.println("Opción 1 presionada");
+    screenUpdated = false;
+
     return true;
   }
   else if (digitalRead(BOTON_2) == HIGH)
@@ -125,6 +125,7 @@ bool displayMenu()
   {
     optionSelected = 3;
     Serial.println("Opción 3 presionada");
+    screenUpdated = false;
     return true;
   }
   else if (digitalRead(BOTON_4) == HIGH)
