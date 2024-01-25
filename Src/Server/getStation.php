@@ -206,7 +206,7 @@ if ($data && isset($data->serialNumber)) {
                         if (updateStationStatus($conn, $stationID)) {
                             if (insertEntryUsageRecord($conn, $userName, $code, $timestamp, $eventType, $stationID)) {
                                 $response = array(
-                                    "status" => "success",
+                                    "status" => "success (E)",
                                     "message" => "Registro de entrada completado exitosamente",
                                     "userName" => $userName,
                                     "userCode" => $code
@@ -248,7 +248,7 @@ if ($data && isset($data->serialNumber)) {
                     if (insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA, $partnerID)) {
                         if (setAvailableStation($conn, $STA)) {
                             $response = array(
-                                "status" => "success",
+                                "status" => "success (S)",
                                 "message" => "Registro de salida completado exitosamente",
                                 "userName" => $userName,
                                 "userCode" => $code

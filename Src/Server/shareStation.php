@@ -54,7 +54,7 @@ if ($data && isset($data->serialNumber) && isset($data->station)) {
                                             if(updateEntryStation($conn, $lastRecordID, $userName)){
 
                                                 $response = array(
-                                                    "status" => "success",
+                                                    "status" => "success (SHARE)",
                                                     "message" => "Acceso concedido.",
                                                     "userName" => $userName,
                                                     "userCode" => $code
