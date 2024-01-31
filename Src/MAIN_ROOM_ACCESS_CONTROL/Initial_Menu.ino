@@ -119,6 +119,8 @@ bool displayMenu()
   {
     optionSelected = 2;
     Serial.println("Opción 2 presionada");
+        screenUpdated = false;
+
     return true;
   }
   else if (digitalRead(BOTON_3) == HIGH)
@@ -132,6 +134,8 @@ bool displayMenu()
   {
     optionSelected = 4;
     Serial.println("Opción 4 presionada");
+        screenUpdated = false;
+
     return true;
   }
 

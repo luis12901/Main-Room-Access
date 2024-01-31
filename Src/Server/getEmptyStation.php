@@ -125,12 +125,44 @@ if ($data && isset($data->serialNumber)) {
             return $stmt->execute();
         }
 
+        function updateStationAvail($conn, $entryStation) {
+            // Divide la cadena de entrada en IDs de estaciones individuales
+            $stationIDs = explode(',', $entryStation);
+        
+            // Prepara la consulta para actualizar el estado de la estación
+            $updateQuery = "UPDATE estaciones SET Estado = 'disponible' WHERE ST_ID = :stationID";
+        
+            // Prepara la instrucción de consulta
+            $stmt = $conn->prepare($updateQuery);
+        
+            // Itera sobre cada ID de estación y actualiza su estado
+            foreach ($stationIDs as $stationID) {
+                // Asigna el valor del ID de estación a la instrucción preparada
+                $stmt->bindParam(':stationID', $stationID, PDO::PARAM_STR);
+                
+                
+                if($stmt->execute()){
 
+                }
+                else{
+                    return false;
+                }
+            }
+            return true;
+        }
 
         function setAvailableStation($conn, $entryStation){
             $lastLetter = substr($entryStation, -1);
 
-            if(strtoupper($lastLetter) === 'P'){
+            if (strpos($entryStation, ',') !== false) {
+                if(updateStationAvail($conn, $entryStation)){
+                    return true;
+                }
+                else{
+                    return false;
+                }
+            }
+            else if(strtoupper($lastLetter) === 'P'){
             
                 $updateQuery = "UPDATE estaciones_particulares SET Estado = 'disponible' WHERE ST_ID = :entryStation";
                 $stmt = $conn->prepare($updateQuery);
@@ -154,13 +186,37 @@ if ($data && isset($data->serialNumber)) {
                 }
             }
         }
-
+        function isUserNotAccompanying($conn, $userName) {
+            $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Acomp = :userName ORDER BY ID DESC LIMIT 1";
+            $stmt = $conn->prepare($query);
+            $stmt->bindParam(':userName', $userName);
+            $stmt->execute();
+    
+            if ($stmt->rowCount() > 0) {
+                $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $recordType = $row['Tipo'];
+                if($recordType == "Entrada"){
+                    return false;
+                }
+                else{
+                    return true;
+                }
+                
+            } 
+            else {
+                return true;
+            }
+        
+    }
 
         
 
         $stmt = findUser($conn, $serialNumber);
 
         if ($stmt->rowCount() > 0) {
+
+
+            if(isUserNotAccompanying($conn, $userName)){
 
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                 $userName = $result['Nombre'];
@@ -253,7 +309,7 @@ if ($data && isset($data->serialNumber)) {
 
                 }
            
-
+            }
 
 
         } 

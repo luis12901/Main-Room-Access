@@ -207,15 +207,26 @@ void getMultipleStations() {
     getRFIDData();
 
     if (serialNumber.length() > 0) {
-      postJSONForMutipleStations();
-      waitForStationsSelections();
-      getResponseFromServer();
+      
+      //waitForStationsSelection();
+      screenUpdated = false;
+      lcd.clear();
+      printCentered(0, "Numero");
+      printCentered(1, "de estaciones");
+      delay(1000);
+      printCentered(0, "3");
+      printCentered(1, "estaciones");
+      delay(1000);
+
+      String stationsN = "3";
+      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"stationsNumber\":\"" + stationsN + "\"}";
+      sendPostRequest(jsonData, multiStationdir);
       break;
     }
   }
 }
 
-void waitForStationsSelections() {
+void waitForStationsSelection() {
   lcd.clear();
   printCentered(0, "Numero");
   printCentered(1, "de estaciones");
@@ -302,13 +313,7 @@ void getRFIDData() {
   }
 }
 
-void postJSONForMutipleStations() {
-  uint8_t counter = 0;
-  jsonMessage = json1 + serialNumber + json2;
-  char completedJsonMessage[150];
-  jsonMessage.toCharArray(completedJsonMessage, 150);
-  conexionURL(counter, completedJsonMessage, phpDirectoryForMultiStations, false);
-}
+
 
 void getResponseFromServer() {
   clienteServidor = servidor.available();
