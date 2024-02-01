@@ -1,7 +1,6 @@
 <?php
 header('Content-Type: application/json');
 
-// Recibe los datos JSON del cuerpo de la solicitud POST
 $jsonData = file_get_contents('php://input');
 $data = json_decode($jsonData);
 
@@ -170,6 +169,7 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
             return $stmt->execute();
         }
 
+
         $stmt = findUser($conn, $serialNumber);
 
         if ($stmt->rowCount() > 0) {
@@ -231,10 +231,11 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
                         
                         if (insertEntryUsageRecord($conn, $userName, $code, $timestamp, $eventType, $updatedStationsIDs)) {
                             $response = array(
-                                "status" => "success (E)",
+                                "status" => "success (M)",
                                 "message" => "Registro de entrada completado exitosamente",
                                 "userName" => $userName,
-                                "userCode" => $code
+                                "userCode" => $code,
+                                "userStation" => $updatedStationsIDs
                             );
                         } 
                         else {

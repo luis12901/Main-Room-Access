@@ -35,9 +35,11 @@ void sendPostRequest(String data, String directory) {
       String message = doc["message"];
       String userName = doc["userName"];
       String userCode = doc["userCode"];
+      String station = doc["userStation"];
 
       status_str = status;
       userName_str = userName;
+      station_str = station;
 
       Serial.println();
       Serial.print("     *** Respuesta del servidor: ");
@@ -63,18 +65,29 @@ void sendPostRequest(String data, String directory) {
       Serial.println("     ***");
       Serial.println();
 
+      Serial.println();
+      Serial.print("     *** Estacion: ");
+      Serial.print(station);
+      Serial.println("     ***");
+      Serial.println();
+
       applyAction();
 
       status = "";
       message = "";
       userName = "";
       userCode = "";
+      station = "";
 
       serialNumber = "";
       userName_str = "";
       status_str = "";
+      station_str = "";
       timerSt = false;
       optionSelected = 0;
+
+    
+      
     } else {
       jsonData = "";
       Serial.print("[HTTP] Fallo en la solicitud HTTP. Código de error: ");
@@ -85,6 +98,7 @@ void sendPostRequest(String data, String directory) {
   } else {
     Serial.println("[HTTP] Fallo al conectar al servidor");
   }
+  
 }
 
 void lcdMessages(int selector) {
@@ -102,6 +116,12 @@ void lcdMessages(int selector) {
     lcd.clear();
     printCentered(0, "Bienvenido,");
     printCentered(1, userName_str);
+    delay(1000);
+    lcd.clear();
+    printCentered(0, "Use la estacion:");
+    printCentered(1, station_str);
+    delay(3000);
+
   } else if (selector == 3) {
     lcd.clear();
     printCentered(0, "Salida ");
@@ -149,41 +169,21 @@ void shareStation() {
   while (true) {
     lcdMessages(1);
     getRFIDData();
-
+    
+    
     if (serialNumber.length() > 0) {
+      waitForStationsSelection();
       screenUpdated = false;
-      String station = "E3M2";
-      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"station\":\"" + station + "\"}";
+      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"station\":\"" + selectedStation + "\"}";
 
       sendPostRequest(jsonData, shareStationDir);
+      option2Selected = true;
       break;
     }
   }
 }
 
-String waitForStationPress() {
-  String enteredStation = "";
-  char key;
-  lcdMessages(1);
 
-  while (enteredStation.length() < 5) {
-    screenUpdated = false;
-
-    key = keypad.getKey();
-
-    if (key == '0') {
-      Serial.println("Please Wait ......");
-      return enteredStation;
-    }
-
-    if (key) {
-      enteredStation += key;
-      Serial.println(enteredStation);
-    }
-  }
-
-  return enteredStation;
-}
 
 void getEmptyStation() {
 
@@ -200,6 +200,43 @@ void getEmptyStation() {
   }
 }
 
+
+
+void waitForStationNumber() {
+  lcd.clear();
+  printCentered(0, "Numero");
+  printCentered(1, "de estaciones");
+
+  Serial.println("Ingrese el número de estaciones que desea usar: ");
+
+  numberOfStations = "";
+  uint8_t rightSpace = 14;
+  lcd.clear();
+  
+  printCentered(0, "Numero de");
+  lcd.setCursor(1, 1);
+  lcd.print("estaciones:");
+
+  uint8_t index = 0;
+  while (index < 1) {
+    key = keypad.getKey();
+
+    if (key) {
+
+      lcd.setCursor(rightSpace + index, 1);
+      lcd.print(key);
+
+      numberOfStations += String(key);
+      Serial.println(key);
+      index++;
+      lcd.setCursor(0, 0);
+      lcd.print(index);
+    }
+
+  }
+}
+
+
 void getMultipleStations() {
   while (true) {
 
@@ -208,18 +245,17 @@ void getMultipleStations() {
 
     if (serialNumber.length() > 0) {
       
-      //waitForStationsSelection();
+      waitForStationNumber();
       screenUpdated = false;
       lcd.clear();
       printCentered(0, "Numero");
       printCentered(1, "de estaciones");
       delay(1000);
-      printCentered(0, "3");
+      printCentered(0, numberOfStations);
       printCentered(1, "estaciones");
       delay(1000);
 
-      String stationsN = "3";
-      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"stationsNumber\":\"" + stationsN + "\"}";
+      String jsonData = "{\"serialNumber\":\"" + serialNumber + "\",\"stationsNumber\":\"" + numberOfStations + "\"}";
       sendPostRequest(jsonData, multiStationdir);
       break;
     }
@@ -233,29 +269,33 @@ void waitForStationsSelection() {
 
   Serial.println("Ingrese el número de estaciones que desea usar: ");
 
-  uint8_t index = 0;
-  char enteredNumber[7];
+  selectedStation = "";
+  uint8_t rightSpace = 7;
+  lcd.clear();
+  printCentered(0, "Estacion:");
+  printCentered(1, "");
 
-  while (true) {
+  uint8_t index = 0;
+  while (index < 2) {
     key = keypad.getKey();
 
     if (key) {
-      enteredNumber[index] = key;
-      index++;
+      lcd.setCursor(rightSpace + index, 1);
+      lcd.print(key);
+
+      selectedStation += String(key);
       Serial.println(key);
-
-      if (key == 0) {
-        index = 0;
-        break;
-      }
+      index++;
+      lcd.setCursor(1, 1);
+      lcd.print(index);
     }
 
-    if (index == 5) {
-      index = 0;
-      break;
-    }
   }
 }
+
+
+
+
 
 bool onlineVerification() {
   static bool previousConnectionState = false;
@@ -282,10 +322,10 @@ bool onlineVerification() {
 }
 
 void getRFIDData() {
+    serialNumber = "";
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()) {
     lcd.clear();
 
-    serialNumber = "";
 
     digitalWrite(BUZZER_PIN, HIGH);
     delay(200);
@@ -315,25 +355,17 @@ void getRFIDData() {
 
 
 
-void getResponseFromServer() {
-  clienteServidor = servidor.available();
-  if (clienteServidor) {
-    while (clienteServidor.connected()) {
-      if (clienteServidor.available() > 0) {
-        char c = clienteServidor.read();
-        // Receive and process the response from the server
-        Serial.print(c);  // Print the received character (if needed)
-      }
-    }
-    clienteServidor.stop();
-  }
-}
-
 void applyAction() {
 
   if (status_str == "success (E)") {
     userEntry();
-  } else if (status_str == "success (S)") {
+  } else if (status_str == "success (A)") {
+    userEntryAcomp();
+
+  }else if (status_str == "success (M)") {
+    userEntryMulti();
+  }
+  else if (status_str == "success (S)") {
     userExit();
   } else if (status_str == "userNotFound") {
     lcdMessages(4);
@@ -377,12 +409,14 @@ void applyAction() {
     printCentered(0, "Ya esta asignado");
     printCentered(1, "con alguien.");
     delay(3000);
+    ESP.restart();
     lcd.clear();
   } else if (status_str == "already-using-a-station") {
     lcd.clear();
     printCentered(0, "Ya esta usando");
     printCentered(1, "una estacion.");
     delay(3000);
+    ESP.restart();
     lcd.clear();
   } else if (status_str == "userNotFound") {
     lcd.clear();
@@ -399,14 +433,65 @@ void applyAction() {
 }
 
 void userEntry() {
-  lcdMessages(2);
   digitalWrite(LOCK_PIN, LOW);
+  lcdMessages(2);
   Serial.print("Bienvenido ");
   Serial.print(userName_str);
   Serial.println(", tu entrada ha sido registrada.");
-  delay(8000);
+
+  delay(6000);
   digitalWrite(LOCK_PIN, HIGH);
   lcd.clear();
+}
+void userEntryAcomp(){
+  digitalWrite(LOCK_PIN, LOW);
+  lcd.clear();
+    printCentered(0, "Bienvenido,");
+    printCentered(1, userName_str);
+    delay(1000);
+    lcd.clear();
+    printCentered(0, "Estaciones:");
+    printCentered(1, station_str);
+    delay(3000);
+  Serial.print("Bienvenido ");
+  Serial.print(userName_str);
+  Serial.println(", tu entrada ha sido registrada.");
+
+  delay(6000);
+  digitalWrite(LOCK_PIN, HIGH);
+  ESP.restart();
+
+}
+
+void userEntryMulti(){
+  digitalWrite(LOCK_PIN, LOW);
+  lcd.clear();
+    printCentered(0, "Bienvenido,");
+    printCentered(1, userName_str);
+    delay(1000);
+    lcd.clear();
+  int comma_pos = station_str.indexOf(',');
+  String first_station = station_str.substring(0, comma_pos);
+  int last_comma_pos = station_str.lastIndexOf(',');
+  String last_station = station_str.substring(last_comma_pos + 1);
+  String stationsAv = first_station + " - " + last_station;
+    printCentered(0, "Estacion:");
+    printCentered(1, stationsAv);
+    delay(3000);
+
+  Serial.print("Bienvenido ");
+  Serial.print(userName_str);
+  Serial.println(", tu entrada ha sido registrada.");
+
+  Serial.print("Estaciones disponibles:  ");
+  Serial.println(station_str);
+
+  delay(6000);
+  digitalWrite(LOCK_PIN, HIGH);
+    ESP.restart();
+
+  
+
 }
 
 void userExit() {
@@ -418,31 +503,6 @@ void userExit() {
   digitalWrite(LOCK_PIN, HIGH);
   lcd.clear();
 }
-
-/*
-void noUserFoundAction()
-{
-  lcdMessages(4);
-  digitalWrite(LOCK_PIN, HIGH);
-  delay(3000);
-  lcd.clear();
-}
-
-void NoSufficientLevel()
-{
-  lcdMessages(5);
-  digitalWrite(LOCK_PIN, HIGH);
-  delay(5000);
-  lcd.clear();
-}
-
-void accessDenied()
-{
-  lcdMessages(6);
-  Serial.println("Acceso denegado.");
-  lcd.clear();
-}
-*/
 
 void conexionURL(int counter, char *mensajeJSON, char *servidor, bool pruebas) {
   char temporal[50];

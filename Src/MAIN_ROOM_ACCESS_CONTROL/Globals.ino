@@ -18,14 +18,14 @@
   const int DISPLAY_TIME = 2000;
 //  WIFI AND SERVER
 
-  char ssid[100]     = "TP-Link_4D28";
-  char password[100] = "Guadalajara129#";
-  const char* serverIP = "http://192.168.100.35";
-  String phpDir = "http://192.168.100.35/MainRoom/getStation.php";       //  Try to switch Http protocol to Https protocol
-  String shareStationDir = "http://192.168.100.35/MainRoom/shareStation.php";
-  String emptyStationdir = "http://192.168.100.35/MainRoom/getEmptyStation.php";
-  String multiStationdir = "http://192.168.100.35/MainRoom/getMultipleStations.php";
 
+char ssid[100]     = "GIT_LUIS12901";
+  char password[100] = "3333379426";
+  const char* serverIP = "http://192.168.43.122";
+  String phpDir = "http://192.168.43.122/MainRoom/getStation.php";       //  Try to Change Http to Https
+  String shareStationDir = "http://192.168.43.122/MainRoom/shareStation.php";
+  String emptyStationdir = "http://192.168.43.122/MainRoom/getEmptyStation.php";
+  String multiStationdir = "http://192.168.43.122/MainRoom/getMultipleStations.php";
 /*
   char ssid[100]     = "Casa_Murillo_Salas_2.4Gnormal";
   char password[100] = "Guadalajara129#";
@@ -37,17 +37,17 @@
 
 
 
+  char ssid[100]     = "TP-Link_4D28";
+  char password[100] = "Guadalajara129#";
+  const char* serverIP = "http://192.168.100.35";
+  String phpDir = "http://192.168.100.35/MainRoom/getStation.php";       //  Try to switch Http protocol to Https protocol
+  String shareStationDir = "http://192.168.100.35/MainRoom/shareStation.php";
+  String emptyStationdir = "http://192.168.100.35/MainRoom/getEmptyStation.php";
+  String multiStationdir = "http://192.168.100.35/MainRoom/getMultipleStations.php";
 
 
 
 
-char ssid[100]     = "GIT_LUIS12901";
-  char password[100] = "3333379426";
-  const char* serverIP = "http://192.168.43.122";
-  String phpDir = "http://192.168.43.122/MainRoom/getStation.php";       //  Try to Change Http to Https
-  String shareStationDir = "http://192.168.43.122/MainRoom/shareStation.php";
-  String emptyStationdir = "http://192.168.43.122/MainRoom/getEmptyStation.php";
-  char* phpDirectoryForMultiStations = "http://192.168.43.122/MainRoom/getMultipleStations.php";
 
 */
 
@@ -56,32 +56,35 @@ char ssid[100]     = "GIT_LUIS12901";
 
   #define SS_PIN 5
   #define RST_PIN 35
-  #define LED_PIN 2
+  #define LED_PIN 34
   #define LOCK_PIN 14
   #define LCD 25
   #define RFID 26
   #define deepSleepPin 33
-  #define BOTON_1 17
+  #define BOTON_1 27
   #define BOTON_2 13    
-  #define BOTON_3 4
-  #define BOTON_4 16
+  #define BOTON_3 33
+  #define BOTON_4 32
 
-#define BUZZER_PIN 12
+  #define BUZZER_PIN 12
 
 
 // RFID CARD
   MFRC522 mfrc522(SS_PIN, RST_PIN);
   int readData[4];
   char enteredStation[7];
-
+  bool option2Selected = false;
 
       String status_str = "";
       String message = "";
+      String station_str = "";
       String userName_str = "";
       String userCode = "";
 
 
 // Database
+String selectedStation = "";
+String numberOfStations = "";
   String json1 = "{\"serialNumber\":\"";
   String json2 = "\"}";
   String serialNumber = "";

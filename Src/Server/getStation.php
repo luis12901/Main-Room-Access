@@ -264,7 +264,8 @@ if ($data && isset($data->serialNumber)) {
                                         "status" => "success (E)",
                                         "message" => "Registro de entrada completado exitosamente",
                                         "userName" => $userName,
-                                        "userCode" => $code
+                                        "userCode" => $code,
+                                        "userStation" => $stationID
                                     );
                                 } else {
                                     $response = array(
@@ -336,6 +337,7 @@ if ($data && isset($data->serialNumber)) {
                     "message" => "Ya esta usando una estacion compartida.",
                     "userName" => $userName,
                     "userCode" => $code
+                    
                     
                 ); 
             }
