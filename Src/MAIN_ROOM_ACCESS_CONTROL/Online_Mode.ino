@@ -85,6 +85,8 @@ void sendPostRequest(String data, String directory) {
       station_str = "";
       timerSt = false;
       optionSelected = 0;
+        ESP.restart();
+
 
     
       
@@ -92,6 +94,8 @@ void sendPostRequest(String data, String directory) {
       jsonData = "";
       Serial.print("[HTTP] Fallo en la solicitud HTTP. Código de error: ");
       Serial.println(httpResponseCode);
+        ESP.restart();
+
     }
 
     http.end();
