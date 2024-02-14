@@ -27,7 +27,7 @@ if ($data && isset($data->serialNumber)) {
         }
 
         function recordType($conn, $user_code){
-            $query = "SELECT Tipo, Estacion FROM registro_uso_estaciones WHERE Codigo = :user_code ORDER BY ID DESC LIMIT 1";
+            $query = "SELECT Estatus, Estacion FROM registro_uso_estaciones WHERE Codigo = :user_code ORDER BY ID DESC LIMIT 1";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':user_code', $user_code);
             $stmt->execute();
@@ -36,10 +36,10 @@ if ($data && isset($data->serialNumber)) {
 
             if ($stmt->rowCount() > 0) {
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                $recordType = $row['Tipo'];
+                $recordType = $row['Estatus'];
                 $STA = isset($row['Estacion']) ? $row['Estacion'] : null;
 
-                if ($recordType == "Salida") {
+                if ($recordType == "desocupado") {
                     return array("STA" => $STA, "Type" => true);
                 } else {
                     return array("STA" => $STA, "Type" => false);
@@ -77,8 +77,8 @@ if ($data && isset($data->serialNumber)) {
         }
 
         function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID){
-            $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
-                            VALUES (:userName, :code, :timestamp, :recType, :stationID, 'NA')";
+            $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora_E, Fecha_Y_Hora_S, Estatus, Estacion, Acomp) 
+                            VALUES (:userName, :code, :timestamp, 0, :recType, :stationID, 'NA')";
             $stmt = $conn->prepare($insertQuery);
             $stmt->bindParam(':userName', $userName);
             $stmt->bindParam(':code', $code);
@@ -111,22 +111,17 @@ if ($data && isset($data->serialNumber)) {
         }
 
 
-        function insertExitUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationUsed, $partnerID){
-            $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
-                            VALUES (:userName, :code, :timestamp, :recType, :stationUsed, :partnerID)";
-            $stmt = $conn->prepare($insertQuery);
-            $stmt->bindParam(':userName', $userName);
-            $stmt->bindParam(':code', $code);
+        function updateExitUsageRecord($conn, $ID_REG, $timestamp) {
+            $updateQuery = "UPDATE registro_uso_estaciones SET Fecha_Y_Hora_S = :timestamp, Estatus = 'desocupado' WHERE Estacion = :ID_REG ORDER BY ID DESC LIMIT 1";
+        
+            $stmt = $conn->prepare($updateQuery);
+            $stmt->bindParam(':ID_REG', $ID_REG);
             $stmt->bindParam(':timestamp', $timestamp);
-            $stmt->bindParam(':recType', $recType);
-            $stmt->bindParam(':stationUsed', $stationUsed);
-            $stmt->bindParam(':partnerID', $partnerID);
-
+        
             return $stmt->execute();
         }
 
         function updateStationAvail($conn, $entryStation) {
-            // Divide la cadena de entrada en IDs de estaciones individuales
             $stationIDs = explode(',', $entryStation);
         
             // Prepara la consulta para actualizar el estado de la estación
@@ -189,7 +184,7 @@ if ($data && isset($data->serialNumber)) {
         }
 
         function checkLastRecordType($conn, $user_code){
-            $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = ? ORDER BY ID DESC LIMIT 1";
+            $query = "SELECT Estatus FROM registro_uso_estaciones WHERE Codigo = ? ORDER BY ID DESC LIMIT 1";
             $stmt = $conn->prepare($query);
             $stmt->bind_param("s", $user_code);
             $stmt->execute();
@@ -207,15 +202,15 @@ if ($data && isset($data->serialNumber)) {
 
         
         function isUserNotAccompanying($conn, $userName) {
-                $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Acomp = :userName ORDER BY ID DESC LIMIT 1";
+                $query = "SELECT Estatus FROM registro_uso_estaciones WHERE Acomp = :userName ORDER BY ID DESC LIMIT 1";
                 $stmt = $conn->prepare($query);
                 $stmt->bindParam(':userName', $userName);
                 $stmt->execute();
         
                 if ($stmt->rowCount() > 0) {
                     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $recordType = $row['Tipo'];
-                    if($recordType == "Entrada"){
+                    $recordType = $row['Estatus'];
+                    if($recordType == "ocupado"){
                         return false;
                     }
                     else{
@@ -249,7 +244,7 @@ if ($data && isset($data->serialNumber)) {
 
                     if ($type) {            
                         
-                        $eventType =  "Entrada";
+                        $eventType =  "ocupado";
                         $stationResult = findAvailableStation($conn);
 
                         if ($stationResult && $stationResult->rowCount() > 0) {
@@ -296,12 +291,12 @@ if ($data && isset($data->serialNumber)) {
                     }
                     else{
                         
-                        $eventType =  "Salida";
                         $entryStationData = getEntryStation($conn, $code);
                         $STA = $entryStationData['STA'];
                         $partnerID = $entryStationData['partner'];
                         
-                        if (insertExitUsageRecord($conn, $userName, $code, $timestamp, $eventType, $STA, $partnerID)) {
+                        if (updateExitUsageRecord($conn, $STA, $timestamp)){
+                            
                             if (setAvailableStation($conn, $STA)) {
                                 $response = array(
                                     "status" => "success (S)",

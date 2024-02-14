@@ -192,32 +192,32 @@ function updateEntryStation($conn, $lastRecordID, $userName){
 
 
 function isUserHavingStation($conn, $code){
-    $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = :codigo ORDER BY ID DESC LIMIT 1";
+    $query = "SELECT Estatus FROM registro_uso_estaciones WHERE Codigo = :codigo ORDER BY ID DESC LIMIT 1";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':codigo', $code);
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $recordType = $row['Tipo'];
+        $recordType = $row['Estatus'];
 
-        return $recordType == "Entrada";
+        return $recordType == "ocupado";
     }
 
     return false;
 }
 
 function isUserAccompanying($conn, $user){
-    $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Acomp = :user ORDER BY ID DESC LIMIT 1";
+    $query = "SELECT Estatus FROM registro_uso_estaciones WHERE Acomp = :user ORDER BY ID DESC LIMIT 1";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user', $user);
     $stmt->execute();
 
     if ($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $recordType = $row['Tipo'];
+        $recordType = $row['Estatus'];
 
-        return $recordType == "Entrada";
+        return $recordType == "ocupado";
     }
 
     return false;
