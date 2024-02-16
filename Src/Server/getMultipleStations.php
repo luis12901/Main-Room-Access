@@ -29,15 +29,15 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
         }
 
         function getLastStationRecordType($conn, $code) {
-            $query = "SELECT Tipo FROM registro_uso_estaciones WHERE Codigo = :code ORDER BY ID DESC LIMIT 1";
+            $query = "SELECT Estatus FROM registro_uso_estaciones WHERE Codigo = :code ORDER BY ID DESC LIMIT 1";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':code', $code);
             $stmt->execute();
             if ($stmt->rowCount() > 0) {
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                return $row['Tipo'];
+                return $row['Estatus'];
             }
-            return 'Salida';
+            return 'desocupado';
         }
 
         function getEntryStation($conn, $code) {
@@ -119,7 +119,7 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
             return $updatedStationsIDs;
         }
         function insertEntryUsageRecord($conn, $userName, $code, $timestamp, $recType, $stationID){
-            $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora, Tipo, Estacion, Acomp) 
+            $insertQuery = "INSERT INTO registro_uso_estaciones (Nombre, Codigo, Fecha_Y_Hora_E, Fecha_Y_Hora_E, Estatus, Estacion, Acomp) 
                             VALUES (:userName, :code, :timestamp, :recType, :stationID, 'NA')";
             $stmt = $conn->prepare($insertQuery);
             $stmt->bindParam(':userName', $userName);
@@ -182,9 +182,9 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
             if($user_type == 'Maestro'){
                 // Verificar el último registro de estación para el usuario
                 $lastRecordType = getLastStationRecordType($conn, $code);
-                if ($lastRecordType == 'Entrada') {
+                if ($lastRecordType == 'ocupado') {
                     
-                    $eventType = 'Salida';
+                    $eventType = 'desocupado';
                     $entryStation = getEntryStation($conn, $code);
                     $partner = getPartner($conn, $code);
 
@@ -223,7 +223,7 @@ if ($data && isset($data->serialNumber) && isset($data->stationsNumber)) {
                 } 
                 else {
 
-                    $eventType = 'Entrada';
+                    $eventType = 'ocupado';
                     
                     if (checkAvailableStations($conn, $stationsNumber)) {
 

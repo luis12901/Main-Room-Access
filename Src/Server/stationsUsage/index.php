@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Uso de Estaciones</title>
+    <title>Control de Estaciones</title>
+    <link rel="icon" type="image/x-icon" href="../img/udg.jpg">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,6 +23,7 @@
         }
 
         h1 {
+            margin-left: 190px;
             text-align: center;
             color: #333;
         }
@@ -68,12 +70,28 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .logo {
+            display: inline-block;
+            margin-right: 10px;
+            width: 150px; /* Ancho deseado */
+            height: auto; /* Altura automática para mantener la proporción */
+        }
+        .header {
+            display: flex;
+            align-items: center; /* Centrar verticalmente */
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Historial de Uso de Estaciones</h1>
-
+        <div class = "header">
+        <a href="../../">
+                    <img src="../img/udg_logo.png" alt="Logo UDG" class="logo">
+                </a>
+                <h1>Control de Acceso a Estaciones</h1>
+        </div>
+        
         <form class="search-form" method="GET" action="">
             <label for="codigo">Buscar por Código:</label>
             <input type="text" id="codigo" name="codigo" placeholder="Ingrese el código">
